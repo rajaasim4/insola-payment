@@ -132,7 +132,7 @@ const StepFour: React.FC = () => {
   };
 
   // Build Tranzilla URL
-  const tranzillaUrl = `https://directng.tranzilla.com/payment/?terminal=${TERMINAL_ID}&amount=100&currency=1&lang=he&email=${encodeURIComponent(values.email)}&phone=${encodeURIComponent(values.phoneNumber)}`;
+  // const tranzillaUrl = `https://directng.tranzilla.com/payment/?terminal=${TERMINAL_ID}&amount=100&currency=1&lang=he&email=${encodeURIComponent(values.email)}&phone=${encodeURIComponent(values.phoneNumber)}`;
 
   return (
     <div>
