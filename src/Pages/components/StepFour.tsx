@@ -106,7 +106,7 @@ const StepFour: React.FC = () => {
   };
 
   const handleIframeMessage = (e: MessageEvent): void => {
-    if (e.origin !== "https://direct.tranzilla.com") return;
+    if (e.origin !== "https://directng.tranzilla.com") return;
 
     const data = e.data as {
       status?: string;
@@ -132,7 +132,7 @@ const StepFour: React.FC = () => {
   };
 
   // Build Tranzilla URL
-  const tranzillaUrl = `https://direct.tranzilla.com/payment/?terminal=${TERMINAL_ID}&amount=100&currency=1&lang=he&email=${encodeURIComponent(values.email)}&phone=${encodeURIComponent(values.phoneNumber)}`;
+  const tranzillaUrl = `https://directng.tranzilla.com/payment/?terminal=${TERMINAL_ID}&amount=100&currency=1&lang=he&email=${encodeURIComponent(values.email)}&phone=${encodeURIComponent(values.phoneNumber)}`;
 
   return (
     <div>
@@ -166,7 +166,9 @@ const StepFour: React.FC = () => {
             ✕ סגור
           </button>
           <iframe
-            src={tranzillaUrl}
+            src="https://directng.tranzila.com/251/iframenew.php"
+            // src={tranzillaUrl}
+            allow="payment"
             className="w-full h-[500px] border rounded"
             title="Tranzilla Payment"
             onLoad={() =>
