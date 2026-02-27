@@ -107,7 +107,7 @@ const StepOne: React.FC<StepProps> = ({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-5 my-10">
+      <div className="grid md:grid-cols-2 gap-5 my-10">
         {products.map((item) => {
           return (
             <div
@@ -127,7 +127,7 @@ const StepOne: React.FC<StepProps> = ({
                   <img
                     src={item.img}
                     alt=""
-                    className="w-full object-contain"
+                    className="md:w-full w-9/12 object-contain"
                   />
                 </div>
                 <div className="flex flex-col items-center ">

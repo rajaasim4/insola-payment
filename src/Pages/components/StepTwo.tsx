@@ -19,7 +19,7 @@ const StepTwo: React.FC<StepProps> = ({
         <h2 className="font-bold text-base">שלב 2: פרטי לקוח</h2>
       </div>
       <div className="">
-        <div className="grid grid-cols-2 gap-5">
+        <div className="grid md:grid-cols-2 gap-5">
           <div className="flex flex-col gap-y-2">
             <label className="font-semibold" htmlFor="firstName">
               שם פרטי

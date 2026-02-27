@@ -112,7 +112,7 @@ const Order = () => {
               touched,
             }) => (
               <Form>
-                <div className="grid grid-cols-2 gap-10">
+                <div className="grid md:grid-cols-2 gap-10">
                   <div className="bg-white p-5 rounded-md flex flex-col gap-y-10">
                     <StepOne
                       values={values}

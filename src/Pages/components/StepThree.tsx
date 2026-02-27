@@ -92,7 +92,7 @@ const StepThree: React.FC<StepProps> = ({
             <div className="text-red-500 text-xs">{errors.streetAddress}</div>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-5 mt-4">
+        <div className="grid md:grid-cols-2 gap-5 mt-4">
           <div className="flex flex-col gap-y-2">
             <label className="font-semibold" htmlFor="region">
               מחוז/אזור
