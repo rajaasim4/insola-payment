@@ -56,7 +56,7 @@ const StepFour: React.FC = () => {
   const [validationError, setValidationError] = useState("");
 
   // Replace with your actual Tranzilla terminal ID
-  const TERMINAL_ID = "251";
+  // const TERMINAL_ID = "251";
 
   const validateAllSteps = async (): Promise<boolean> => {
     // Touch all fields to show errors
