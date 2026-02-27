@@ -1,13 +1,12 @@
 import { atom } from "jotai";
 
-// Order form data atom
-export const orderFormAtom = atom({
-  // Step 1: Product selection
+import { atomWithStorage } from "jotai/utils";
+import type { FormValues } from "./types";
+
+export const orderFormAtom = atomWithStorage<FormValues>("orderForm", {
   selectedProductId: 4,
   size: "S-M",
   warranty: false,
-
-  // Step 2: Customer details
   firstName: "",
   lastName: "",
   email: "",
@@ -15,8 +14,6 @@ export const orderFormAtom = atom({
   marketingSMS: false,
   phoneCountryCode: "92",
   phoneNumber: "",
-
-  // Step 3: Shipping address
   country: "",
   city: "",
   streetAddress: "",
@@ -24,12 +21,10 @@ export const orderFormAtom = atom({
   postalCode: "",
   shippingMethod: "standard",
   shippingCost: "15",
-
-  // Step 4: Payment (to be added)
-  //   paymentMethod: "",
+  price: "248.00",
+  quantity: "4",
 });
 
-// Derived atom for form validation status
 export const formValidationAtom = atom((get) => {
   const form = get(orderFormAtom);
   return {

@@ -17,6 +17,8 @@ export interface FormValues {
   selectedProductId: number;
   size: string;
   warranty: boolean;
+  price: string;
+  quantity: string;
 
   // Step 2: Customer details
   firstName: string;

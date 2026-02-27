@@ -13,6 +13,8 @@ const validationSchema = Yup.object({
   selectedProductId: Yup.number().required(),
   size: Yup.string().required("נא לבחור מידה"),
   warranty: Yup.boolean(),
+  price: Yup.string(),
+  quantity: Yup.string(),
 
   // Step 2
   firstName: Yup.string().required("נא להזין שם פרטי"),
@@ -35,6 +37,7 @@ const validationSchema = Yup.object({
 
 const Order = () => {
   const [formData, setFormData] = useAtom(orderFormAtom);
+  console.log(formData);
 
   const initialValues = {
     selectedProductId: formData.selectedProductId || 4,
@@ -54,6 +57,8 @@ const Order = () => {
     postalCode: formData.postalCode || "",
     shippingMethod: formData.shippingMethod || "standard",
     shippingCost: formData.shippingCost || "15",
+    price: formData.price || "248.00",
+    quantity: formData.quantity || "4",
 
     // paymentMethod: formData.paymentMethod || "",
   };

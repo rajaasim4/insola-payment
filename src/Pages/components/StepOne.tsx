@@ -11,7 +11,7 @@ const StepOne: React.FC<StepProps> = ({
   const products = [
     {
       id: 4,
-      quantity: "4x",
+      quantity: "4",
       description: "זוגות",
       discount: "72% הנחה",
       originalPrice: "₪876.00",
@@ -22,7 +22,7 @@ const StepOne: React.FC<StepProps> = ({
     },
     {
       id: 3,
-      quantity: "3x",
+      quantity: "3",
       description: "זוגות",
       discount: "66% הנחה",
       originalPrice: "₪657.00",
@@ -33,7 +33,7 @@ const StepOne: React.FC<StepProps> = ({
     },
     {
       id: 2,
-      quantity: "2x",
+      quantity: "2",
       description: "זוגות",
       discount: "49% הנחה",
       originalPrice: "₪438.00",
@@ -44,7 +44,7 @@ const StepOne: React.FC<StepProps> = ({
     },
     {
       id: 1,
-      quantity: "1x",
+      quantity: "1",
       description: "זוג",
       discount: "",
       originalPrice: "",
@@ -113,7 +113,11 @@ const StepOne: React.FC<StepProps> = ({
             <div
               key={item.id}
               className="rounded-sm cursor-pointer overflow-hidden relative pb-6"
-              onClick={() => setFieldValue("selectedProductId", item.id)}
+              onClick={() => {
+                setFieldValue("selectedProductId", item.id);
+                setFieldValue("price", item.discountedPrice);
+                setFieldValue("quantity", item.quantity);
+              }}
             >
               <div
                 className={`text-white h-7  font-bold py-1 w-full  text-center text-sm ${item.toplabel !== "" ? "bg-blue-400" : "bg-transparent"}`}
@@ -131,7 +135,7 @@ const StepOne: React.FC<StepProps> = ({
                   />
                 </div>
                 <div className="flex flex-col items-center ">
-                  <h3 className="font-bold text-3xl">{item.quantity}</h3>
+                  <h3 className="font-bold text-3xl">{item.quantity}x</h3>
                   <h4 className="text-xs font-semibold">{item.description}</h4>
                   <h3 className="text-[#F79E1B] font-semibold">
                     {item.discount}
