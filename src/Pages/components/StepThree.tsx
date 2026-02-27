@@ -5,7 +5,6 @@ import { COUNTRIES } from "../../utils/constants";
 
 const StepThree: React.FC<StepProps> = ({
   values,
-  setFieldValue,
   handleChange,
   handleBlur,
   errors,

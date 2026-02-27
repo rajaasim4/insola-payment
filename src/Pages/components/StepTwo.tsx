@@ -7,7 +7,6 @@ import { InputCountries } from "../../utils/constants";
 
 const StepTwo: React.FC<StepProps> = ({
   values,
-  setFieldValue,
   handleChange,
   handleBlur,
   errors,

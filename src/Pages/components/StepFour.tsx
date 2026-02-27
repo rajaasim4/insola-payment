@@ -50,7 +50,6 @@ const StepFour: React.FC = () => {
     isSubmitting,
     validateForm,
     setTouched,
-    errors,
   }: FormikContextType<FormValues> = useFormikContext<FormValues>();
   const [, setFormData] = useAtom(orderFormAtom);
   const [showIframe, setShowIframe] = useState(false);
@@ -118,8 +117,8 @@ const StepFour: React.FC = () => {
     if (data.status === "success" || data.response === "000") {
       setFormData({
         ...values,
-        paymentMethod: "tranzilla",
-        transactionId: data.transactionId || "",
+        // paymentMethod: "tranzilla",
+        // transactionId: data.transactionId || "",
       });
       setShowIframe(false);
       submitForm();
