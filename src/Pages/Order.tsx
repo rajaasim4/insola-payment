@@ -61,15 +61,15 @@ const Order = () => {
   return (
     <div className="pb-20">
       {/* Header  */}
-      <div className="h-70 pt-20 pb-5 bg-[url('/images/header-bg.jpg')] w-full bg-cover">
-        <div className="w-full   mx-auto max-w-5xl flex justify-between">
-          <div className="w-1/2 hidden lg:block">
+      <div className="h-70 lg:pt-20 lg:pb-5 bg-[url('/images/header-bg.jpg')] w-full bg-cover bg-center">
+        <div className="w-full   mx-auto max-w-5xl flex justify-between lg:flex-row flex-col">
+          <div className="lg:w-1/2 max-lg:flex justify-center">
             <img
               src="/images/logo_insola-transparent.png"
               className="max-w-40 "
               alt=""
             />
-            <div className="space-y-2.5 font-semibold">
+            <div className="space-y-2.5 font-semibold max-lg:hidden">
               {[
                 "מפחית כאבים מגנטי",
                 "נוחות מיידית",
@@ -82,18 +82,18 @@ const Order = () => {
               ))}
             </div>
           </div>
-          <div className="w-1/2 hidden lg:block">
+          <div className="lg:w-1/2 max-lg:flex justify-center">
             <img
               src="/images/product-v3.png"
-              className="max-w-90 object-contain w-full h-full"
+              className="lg:max-w-90  object-contain w-9/12 lg:w-full h-full"
               alt=""
             />
           </div>
         </div>
       </div>
       {/* Steps */}
-      <div className="bg-gray-100">
-        <div className="max-w-5xl mx-auto py-10">
+      <div className="bg-gray-100 lg:p-5 p-3">
+        <div className="max-w-5xl mx-auto lg:py-10 py-5">
           <Formik
             initialValues={initialValues}
             validationSchema={validationSchema}
