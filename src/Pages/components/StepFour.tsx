@@ -319,7 +319,7 @@ const StepFour: React.FC = () => {
             allow="payment"
             sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups allow-popups-to-escape-sandbox"
             onLoad={() => setIsPaymentLoading(false)}
-            className="w-full min-h-[500px]"
+            className="w-full min-h-125"
           />
         </div>
       </div>
