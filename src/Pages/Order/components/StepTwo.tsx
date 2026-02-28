@@ -1,9 +1,9 @@
 import { FaUserLarge } from "react-icons/fa6";
-import type { StepProps } from "../../types";
+import type { StepProps } from "../../../types";
 // import IntlTelInput from "intl-tel-input/reactWithUtils";
 // import { useState } from "react";
 // import "intl-tel-input/styles";
-import { InputCountries } from "../../utils/constants";
+import { InputCountries } from "../../../utils/constants";
 
 const StepTwo: React.FC<StepProps> = ({
   values,

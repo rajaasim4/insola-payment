@@ -1,7 +1,7 @@
 import React from "react";
 import { FaCheck, FaGlobeAmericas } from "react-icons/fa";
-import type { StepProps } from "../../types";
-import { COUNTRIES } from "../../utils/constants";
+import type { StepProps } from "../../../types";
+import { COUNTRIES } from "../../../utils/constants";
 
 const StepThree: React.FC<StepProps> = ({
   values,

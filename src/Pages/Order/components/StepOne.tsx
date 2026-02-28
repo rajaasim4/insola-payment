@@ -1,5 +1,5 @@
 import { FaCalendarCheck } from "react-icons/fa";
-import type { StepProps } from "../../types";
+import type { StepProps } from "../../../types";
 
 const StepOne: React.FC<StepProps> = ({
   values,

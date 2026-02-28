@@ -5,7 +5,7 @@ import StepThree from "./components/StepThree";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useAtom } from "jotai";
-import { orderFormAtom } from "../store";
+import { orderFormAtom } from "../../store";
 import StepFour from "./components/StepFour";
 
 const validationSchema = Yup.object({

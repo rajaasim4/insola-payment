@@ -146,8 +146,8 @@ import React, { useMemo, useState } from "react";
 import { IoIosLock } from "react-icons/io";
 import { useFormikContext, type FormikContextType } from "formik";
 import { useAtom } from "jotai";
-import { orderFormAtom } from "../../store";
-import type { FormValues } from "../../types";
+import { orderFormAtom } from "../../../store";
+import type { FormValues } from "../../../types";
 
 const StepFour: React.FC = () => {
   const { values, isSubmitting }: FormikContextType<FormValues> =
