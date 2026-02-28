@@ -200,8 +200,8 @@ const StepFour: React.FC = () => {
     <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
-        <IoIosLock className="text-green-600" size={32} />
-        <h2 className="font-bold text-2xl">שלב 4: סיכום הזמנה ותשלום</h2>
+        <IoIosLock className="text-green-600" size={26} />
+        <h2 className="font-bold text-xl">שלב 4: סיכום הזמנה ותשלום</h2>
       </div>
 
       {/* Payment Form & Iframe */}
@@ -273,8 +273,9 @@ const StepFour: React.FC = () => {
               </>
             ) : (
               <>
-                כן, שלחו לי את ה-Insola שלי עכשיו! (₪
-                {calculations.total.toFixed(0)})
+                כן, שלחו לי את ה-Insola שלי עכשיו!
+                {/* (₪ */}
+                {/* {calculations.total.toFixed(0)}) */}
               </>
             )}
           </button>
