@@ -33,6 +33,11 @@ const validationSchema = Yup.object({
   postalCode: Yup.string().required("נא להזין מיקוד"),
   shippingMethod: Yup.string(),
   shippingCost: Yup.string(),
+  // Step 4
+  cardNumber: Yup.string().required("נא להזין מספר כרטיס"),
+  cvv: Yup.string().required("נא להזין CVV"),
+  expiryDate: Yup.string().required("נא להזין תוקף כרטיס"),
+  termsAccepted: Yup.boolean().oneOf([true], "נא לאשר את התנאים"),
 });
 
 const Order = () => {
@@ -59,8 +64,10 @@ const Order = () => {
     shippingCost: formData.shippingCost || "15",
     price: formData.price || "248.00",
     quantity: formData.quantity || "4",
-
-    // paymentMethod: formData.paymentMethod || "",
+    cardNumber: formData.cardNumber || "",
+    cvv: formData.cvv || "",
+    expiryDate: formData.expiryDate || "",
+    termsAccepted: formData.termsAccepted || false,
   };
 
   return (

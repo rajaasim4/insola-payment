@@ -23,6 +23,10 @@ export const orderFormAtom = atomWithStorage<FormValues>("orderForm", {
   shippingCost: "15",
   price: "248.00",
   quantity: "4",
+  cardNumber: "",
+  cvv: "",
+  expiryDate: "",
+  termsAccepted: false,
 });
 
 export const formValidationAtom = atom((get) => {

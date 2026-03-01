@@ -39,7 +39,10 @@ export interface FormValues {
   shippingCost: string;
 
   // Step 4: Payment
-  // paymentMethod: string;
+  cardNumber: string;
+  cvv: string;
+  expiryDate: string;
+  termsAccepted: boolean;
 }
 
 export interface StepProps {
