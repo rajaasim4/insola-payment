@@ -12,8 +12,6 @@ const StepFour: React.FC = () => {
     isSubmitting,
     handleChange,
     handleBlur,
-    errors,
-    touched,
   }: FormikContextType<FormValues> = useFormikContext<FormValues>();
   const [, setFormData] = useAtom(orderFormAtom);
 

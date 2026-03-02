@@ -1,36 +1,6 @@
-import React, { useEffect } from "react";
-import { useAtom } from "jotai";
-import { orderFormAtom } from "../../store";
 import { BsFillPatchCheckFill } from "react-icons/bs";
 
 const Success: React.FC = () => {
-  const [, setFormData] = useAtom(orderFormAtom);
-
-  useEffect(() => {
-    // Clear saved form data after successful payment
-    setFormData({
-      selectedProductId: 4,
-      size: "S-M",
-      warranty: false,
-      firstName: "",
-      lastName: "",
-      email: "",
-      marketingEmails: false,
-      marketingSMS: false,
-      phoneCountryCode: "92",
-      phoneNumber: "",
-      country: "",
-      city: "",
-      streetAddress: "",
-      region: "",
-      postalCode: "",
-      shippingMethod: "standard",
-      shippingCost: "15",
-      price: "248.00",
-      quantity: "4",
-    });
-  }, [setFormData]);
-
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg p-8 max-w-md w-full text-center space-y-6 shadow-lg">
