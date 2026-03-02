@@ -7,6 +7,26 @@ import * as Yup from "yup";
 import { useAtom } from "jotai";
 import { orderFormAtom } from "../../store";
 import StepFour from "./components/StepFour";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { createCreditCardTransaction } from "../../api/backend";
+
+function luhnCheck(value: string) {
+  const digits = value.replace(/\D/g, "");
+  let sum = 0;
+  let shouldDouble = false;
+  for (let i = digits.length - 1; i >= 0; i -= 1) {
+    let digit = Number(digits[i]);
+    if (Number.isNaN(digit)) return false;
+    if (shouldDouble) {
+      digit *= 2;
+      if (digit > 9) digit -= 9;
+    }
+    sum += digit;
+    shouldDouble = !shouldDouble;
+  }
+  return digits.length >= 12 && sum % 10 === 0;
+}
 
 const validationSchema = Yup.object({
   // Step 1
@@ -23,26 +43,64 @@ const validationSchema = Yup.object({
   marketingEmails: Yup.boolean(),
   marketingSMS: Yup.boolean(),
   phoneCountryCode: Yup.string(),
-  phoneNumber: Yup.string().required("נא להזין מספר טלפון"),
+  phoneNumber: Yup.string()
+    .required("נא להזין מספר טלפון")
+    .matches(/^\d{6,15}$/, "מספר טלפון לא תקין"),
 
   // Step 3
   country: Yup.string().required("נא להזין עיר"),
   city: Yup.string().required("נא להזין עיר"),
   streetAddress: Yup.string().required("נא להזין כתובת"),
   region: Yup.string().required("נא להזין מחוז/אזור"),
-  postalCode: Yup.string().required("נא להזין מיקוד"),
+  postalCode: Yup.string()
+    .required("נא להזין מיקוד")
+    .matches(/^\d{3,10}$/, "מיקוד לא תקין"),
   shippingMethod: Yup.string(),
   shippingCost: Yup.string(),
   // Step 4
-  cardNumber: Yup.string().required("נא להזין מספר כרטיס"),
-  cvv: Yup.string().required("נא להזין CVV"),
-  expiryDate: Yup.string().required("נא להזין תוקף כרטיס"),
+  cardNumber: Yup.string()
+    .required("נא להזין מספר כרטיס")
+    .test("card-number", "מספר כרטיס לא תקין", (value) => {
+      if (!value) return false;
+      const digits = value.replace(/\D/g, "");
+      if (digits.length < 12 || digits.length > 19) return false;
+      return luhnCheck(digits);
+    }),
+  cvv: Yup.string()
+    .required("נא להזין CVV")
+    .matches(/^\d{3,4}$/, "CVV לא תקין"),
+  expiryDate: Yup.string()
+    .required("נא להזין תוקף כרטיס")
+    .matches(
+      /^(0[1-9]|1[0-2])\s*\/\s*(\d{2}|\d{4})$/,
+      "תוקף לא תקין (MM/YY)",
+    ),
   termsAccepted: Yup.boolean().oneOf([true], "נא לאשר את התנאים"),
 });
+
+function parseExpiryDate(expiryDate: string) {
+  const cleaned = String(expiryDate).replace(/\s+/g, "");
+  const [mmRaw, yyRaw] = cleaned.split("/");
+
+  const expire_month = Number(mmRaw);
+  const yy = String(yyRaw ?? "");
+  const expire_year = yy.length === 2 ? Number(`20${yy}`) : Number(yy);
+
+  if (!Number.isFinite(expire_month) || expire_month < 1 || expire_month > 12) {
+    return null;
+  }
+
+  if (!Number.isFinite(expire_year) || expire_year < 2000 || expire_year > 2100) {
+    return null;
+  }
+
+  return { expire_month, expire_year };
+}
 
 const Order = () => {
   const [formData, setFormData] = useAtom(orderFormAtom);
   console.log(formData);
+  const navigate = useNavigate();
 
   const initialValues = {
     selectedProductId: formData.selectedProductId || 4,
@@ -109,9 +167,61 @@ const Order = () => {
           <Formik
             initialValues={initialValues}
             validationSchema={validationSchema}
-            onSubmit={(values) => {
-              setFormData(values);
-              console.log("Form submitted:", values);
+            onSubmit={async (values, { setSubmitting }) => {
+              try {
+                setFormData(values);
+
+                const expiry = parseExpiryDate(values.expiryDate);
+                if (!expiry) {
+                  toast.error("Invalid expiry date. Use MM/YY");
+                  return;
+                }
+                const { expire_month, expire_year } = expiry;
+
+                const unitPrice = Number(values.price);
+                const unitsNumber = Number(values.quantity);
+
+                const client: Record<string, string> = {};
+                const fullName = `${values.firstName} ${values.lastName}`.trim();
+                if (fullName) client.name = fullName;
+                if (values.email) client.email = values.email;
+                if (values.phoneCountryCode) client.phone_country_code = values.phoneCountryCode;
+                if (values.phoneNumber) client.phone_number = values.phoneNumber;
+                if (values.city) client.city = values.city;
+                if (values.streetAddress) client.address_line_1 = values.streetAddress;
+                if (values.postalCode) client.zip = values.postalCode;
+
+                const result = await createCreditCardTransaction({
+                  txn_type: "debit",
+                  expire_month,
+                  expire_year,
+                  cvv: values.cvv,
+                  card_number: values.cardNumber.replace(/\s+/g, ""),
+                  items: [
+                    {
+                      name: "Insola Order",
+                      type: "I",
+                      unit_price: unitPrice,
+                      units_number: unitsNumber,
+                    },
+                  ],
+                  client: Object.keys(client).length ? (client as any) : undefined,
+                });
+
+                if (result.tranzila.error_code === 0) {
+                  navigate("/success");
+                  return;
+                }
+
+                toast.error(result.tranzila.message || "Payment failed");
+                navigate("/error");
+              } catch (e) {
+                const msg = e instanceof Error ? e.message : "Payment failed";
+                toast.error(msg);
+                navigate("/error");
+              } finally {
+                setSubmitting(false);
+              }
             }}
             enableReinitialize
           >

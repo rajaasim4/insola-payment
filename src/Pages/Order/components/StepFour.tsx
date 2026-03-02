@@ -5,6 +5,17 @@ import { useAtom } from "jotai";
 import { orderFormAtom } from "../../../store";
 import type { FormValues } from "../../../types";
 
+function formatCardNumber(input: string) {
+  const digits = input.replace(/\D/g, "").slice(0, 19);
+  return digits.replace(/(\d{4})(?=\d)/g, "$1 ");
+}
+
+function formatExpiry(input: string) {
+  const digits = input.replace(/\D/g, "").slice(0, 4);
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+}
+
 const StepFour: React.FC = () => {
   const {
     submitForm,
@@ -16,6 +27,7 @@ const StepFour: React.FC = () => {
   const [, setFormData] = useAtom(orderFormAtom);
 
   const handleSubmit = async (): Promise<void> => {
+    if (isSubmitting) return;
     setFormData(values);
     await submitForm();
   };
@@ -31,10 +43,19 @@ const StepFour: React.FC = () => {
           type="text"
           name="cardNumber"
           placeholder="XXXX XXXX XXXX XXXX"
-          onChange={handleChange}
+          value={values.cardNumber}
+          onChange={(e) => {
+            const formatted = formatCardNumber(e.target.value);
+            handleChange({ ...e, target: { ...e.target, value: formatted } });
+          }}
           onBlur={handleBlur}
+          inputMode="numeric"
+          autoComplete="cc-number"
           className="w-full border border-gray-300 rounded px-3 py-2 text-right"
         />
+        {touched.cardNumber && errors.cardNumber ? (
+          <p className="text-red-500 text-xs mt-1 text-right">{errors.cardNumber}</p>
+        ) : null}
       </div>
 
       {/* CVV and Expiry */}
@@ -47,10 +68,16 @@ const StepFour: React.FC = () => {
             type="text"
             name="cvv"
             placeholder="XXX"
+            value={values.cvv}
             onChange={handleChange}
             onBlur={handleBlur}
+            inputMode="numeric"
+            autoComplete="cc-csc"
             className="w-full border border-gray-300 rounded px-3 py-2 text-right"
           />
+          {touched.cvv && errors.cvv ? (
+            <p className="text-red-500 text-xs mt-1 text-right">{errors.cvv}</p>
+          ) : null}
         </div>
         <div>
           <label className="block text-right text-sm font-semibold mb-1">
@@ -60,10 +87,19 @@ const StepFour: React.FC = () => {
             type="text"
             name="expiryDate"
             placeholder="MM / YY"
-            onChange={handleChange}
+            value={values.expiryDate}
+            onChange={(e) => {
+              const formatted = formatExpiry(e.target.value);
+              handleChange({ ...e, target: { ...e.target, value: formatted } });
+            }}
             onBlur={handleBlur}
+            inputMode="numeric"
+            autoComplete="cc-exp"
             className="w-full border border-gray-300 rounded px-3 py-2 text-right"
           />
+          {touched.expiryDate && errors.expiryDate ? (
+            <p className="text-red-500 text-xs mt-1 text-right">{errors.expiryDate}</p>
+          ) : null}
         </div>
       </div>
 
@@ -74,6 +110,7 @@ const StepFour: React.FC = () => {
         <input
           type="checkbox"
           name="termsAccepted"
+          checked={values.termsAccepted}
           onChange={handleChange}
           className="w-4 h-4"
         />
