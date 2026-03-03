@@ -23,6 +23,9 @@ const StepFour: React.FC = () => {
     isSubmitting,
     handleChange,
     handleBlur,
+    touched,
+    setFieldValue,
+    errors,
   }: FormikContextType<FormValues> = useFormikContext<FormValues>();
   const [, setFormData] = useAtom(orderFormAtom);
 
@@ -44,17 +47,18 @@ const StepFour: React.FC = () => {
           name="cardNumber"
           placeholder="XXXX XXXX XXXX XXXX"
           value={values.cardNumber}
-          onChange={(e) => {
-            const formatted = formatCardNumber(e.target.value);
-            handleChange({ ...e, target: { ...e.target, value: formatted } });
-          }}
+          onChange={(e) =>
+            setFieldValue("cardNumber", formatCardNumber(e.target.value))
+          }
           onBlur={handleBlur}
           inputMode="numeric"
           autoComplete="cc-number"
           className="w-full border border-gray-300 rounded px-3 py-2 text-right"
         />
         {touched.cardNumber && errors.cardNumber ? (
-          <p className="text-red-500 text-xs mt-1 text-right">{errors.cardNumber}</p>
+          <p className="text-red-500 text-xs mt-1 text-right">
+            {errors.cardNumber}
+          </p>
         ) : null}
       </div>
 
@@ -69,7 +73,12 @@ const StepFour: React.FC = () => {
             name="cvv"
             placeholder="XXX"
             value={values.cvv}
-            onChange={handleChange}
+            onChange={(e) =>
+              setFieldValue(
+                "cvv",
+                e.target.value.replace(/\D/g, "").slice(0, 4),
+              )
+            }
             onBlur={handleBlur}
             inputMode="numeric"
             autoComplete="cc-csc"
@@ -88,17 +97,18 @@ const StepFour: React.FC = () => {
             name="expiryDate"
             placeholder="MM / YY"
             value={values.expiryDate}
-            onChange={(e) => {
-              const formatted = formatExpiry(e.target.value);
-              handleChange({ ...e, target: { ...e.target, value: formatted } });
-            }}
+            onChange={(e) =>
+              setFieldValue("expiryDate", formatExpiry(e.target.value))
+            }
             onBlur={handleBlur}
             inputMode="numeric"
             autoComplete="cc-exp"
             className="w-full border border-gray-300 rounded px-3 py-2 text-right"
           />
           {touched.expiryDate && errors.expiryDate ? (
-            <p className="text-red-500 text-xs mt-1 text-right">{errors.expiryDate}</p>
+            <p className="text-red-500 text-xs mt-1 text-right">
+              {errors.expiryDate}
+            </p>
           ) : null}
         </div>
       </div>
@@ -133,7 +143,7 @@ const StepFour: React.FC = () => {
         disabled={isSubmitting}
         className="w-full bg-[#5cb85c] hover:bg-[#4cae4c] text-white font-bold py-3 px-6 rounded transition-colors disabled:bg-gray-400"
       >
-        {isSubmitting ? "שולח..." : "כן, שלחו לי את ה-AKUSOLI שלי עכשיו!"}
+        {isSubmitting ? "שולח..." : "כן, שלחו לי את ה-Insola שלי עכשיו!"}
       </button>
 
       {/* SSL Security Footer */}
