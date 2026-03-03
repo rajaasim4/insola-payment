@@ -9,6 +9,10 @@
   --font-montserrat: "Montserrat", sans-serif;
 }
 
+@theme {
+  --breakpoint-900: 900px;
+}
+
 * {
   font-family: "Montserrat", sans-serif;
 }

@@ -26,14 +26,14 @@ export interface FormValues {
   email: string;
   marketingEmails: boolean;
   marketingSMS: boolean;
-  phoneCountryCode: string;
+  // phoneCountryCode: string;
   phoneNumber: string;
 
   // Step 3: Shipping address
   country: string;
   city: string;
   streetAddress: string;
-  region: string;
+  // region: string;
   postalCode: string;
   shippingMethod: string;
   shippingCost: string;
@@ -52,4 +52,22 @@ export interface StepProps {
   handleBlur: (e: React.FocusEvent<any>) => void;
   errors: Record<string, string>;
   touched: Record<string, boolean>;
+}
+
+export interface UpsellOption {
+  id: number;
+  fromQuantity: number;
+  title: string;
+  addPairs: number;
+  addPrice: number;
+  totalPairs: number;
+  totalPrice: number;
+  perItemPrice: number;
+  hasDownsell: boolean;
+  downsell?: {
+    addPairs: number;
+    addPrice: number;
+    totalPairs: number;
+    totalPrice: number;
+  };
 }

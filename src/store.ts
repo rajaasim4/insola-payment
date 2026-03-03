@@ -12,16 +12,16 @@ export const orderFormAtom = atomWithStorage<FormValues>("orderForm", {
   email: "",
   marketingEmails: false,
   marketingSMS: false,
-  phoneCountryCode: "92",
+  // phoneCountryCode: "92",
   phoneNumber: "",
-  country: "",
+  country: "ישראל",
   city: "",
   streetAddress: "",
-  region: "",
+  // region: "",
   postalCode: "",
   shippingMethod: "standard",
   shippingCost: "15",
-  price: "248.00",
+  price: "299.00",
   quantity: "4",
   cardNumber: "",
   cvv: "",
@@ -35,7 +35,6 @@ export const formValidationAtom = atom((get) => {
     step1Valid: form.selectedProductId && form.size,
     step2Valid:
       form.firstName && form.lastName && form.email && form.phoneNumber,
-    step3Valid:
-      form.city && form.streetAddress && form.region && form.postalCode,
+    step3Valid: form.city && form.streetAddress && form.postalCode,
   };
 });

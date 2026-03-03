@@ -35,9 +35,42 @@ const StepFour: React.FC = () => {
     await submitForm();
   };
 
+  const basePrice = Number(values.price) || 0;
+  const quantity = Number(values.quantity) || 0;
+  const shipping = Number(values.shippingCost) || 0;
+
+  const warrantyUnitPrice = 4;
+  const warrantyTotal = values.warranty ? warrantyUnitPrice * quantity : 0;
+
+  const finalTotal = basePrice + shipping + warrantyTotal;
   return (
     <div>
       {/* Card Number */}
+      {/* Order Summary */}
+      {/* Order Summary */}
+      <div className="mb-6 border border-gray-200 rounded p-4 bg-gray-50 text-right space-y-2">
+        <div className="flex justify-between text-sm">
+          <span>מחיר:</span>
+          <span>₪{basePrice.toFixed(2)}</span>
+        </div>
+
+        {values.warranty && (
+          <div className="flex justify-between text-sm">
+            <span>אחריות (₪4 × {quantity}):</span>
+            <span>₪{warrantyTotal.toFixed(2)}</span>
+          </div>
+        )}
+
+        <div className="flex justify-between text-sm">
+          <span>משלוח עד הבית:</span>
+          <span>₪{shipping.toFixed(2)}</span>
+        </div>
+
+        <div className="border-t pt-2 flex justify-between font-bold text-base">
+          <span>סה״כ לתשלום:</span>
+          <span>₪{finalTotal.toFixed(2)}</span>
+        </div>
+      </div>
       <div className="mb-4">
         <label className="block text-right text-sm font-semibold mb-1">
           מספר כרטיס

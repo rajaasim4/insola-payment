@@ -1,7 +1,7 @@
 import React from "react";
 import { FaCheck, FaGlobeAmericas } from "react-icons/fa";
 import type { StepProps } from "../../../types";
-import { COUNTRIES } from "../../../utils/constants";
+// import { COUNTRIES } from "../../../utils/constants";
 
 const StepThree: React.FC<StepProps> = ({
   values,
@@ -34,7 +34,7 @@ const StepThree: React.FC<StepProps> = ({
 
       <div className="">
         <div className="flex flex-col gap-y-2">
-          <label className="font-semibold" htmlFor="country">
+          {/* <label className="font-semibold" htmlFor="country">
             מדינה
           </label>
           <select
@@ -51,7 +51,19 @@ const StepThree: React.FC<StepProps> = ({
                 {country.name}
               </option>
             ))}
-          </select>
+          </select> */}
+          <label className="font-semibold" htmlFor="country">
+            מדינה
+          </label>
+          <input
+            type="text"
+            name="country"
+            id="country"
+            className="border rounded-md py-2 pr-3 border-gray-300 bg-gray-100 cursor-not-allowed"
+            value="ישראל"
+            readOnly
+          />
+
           {touched.country && errors.country && (
             <div className="text-red-500 text-xs">{errors.country}</div>
           )}
@@ -92,8 +104,8 @@ const StepThree: React.FC<StepProps> = ({
             <div className="text-red-500 text-xs">{errors.streetAddress}</div>
           )}
         </div>
-        <div className="grid md:grid-cols-2 gap-5 mt-4">
-          <div className="flex flex-col gap-y-2">
+        <div className="grid grid-cols-1 gap-5 mt-4">
+          {/* <div className="flex flex-col gap-y-2">
             <label className="font-semibold" htmlFor="region">
               מחוז/אזור
             </label>
@@ -110,7 +122,7 @@ const StepThree: React.FC<StepProps> = ({
             {touched.region && errors.region && (
               <div className="text-red-500 text-xs">{errors.region}</div>
             )}
-          </div>
+          </div> */}
           <div className="flex flex-col gap-y-2">
             <label className="font-semibold" htmlFor="postalCode">
               מיקוד
@@ -147,7 +159,7 @@ const StepThree: React.FC<StepProps> = ({
                 htmlFor="
               "
               >
-                רגיל ₪15.00
+                ₪15.00 משלוח עד פתח הבית
               </label>
             </div>
           </div>
