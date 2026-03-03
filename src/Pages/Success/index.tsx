@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { UpsellModal } from "../../components/UpsellModal";
 import { DownsellModal } from "../../components/DownsellModal";
@@ -6,6 +6,21 @@ import { upsellOptions } from "../../data/upsellOptions";
 import { toast } from "sonner";
 import TagManager from "react-gtm-module";
 import Purchases from "../Order/components/Purchases";
+
+const ORDER_ID_KEY = "current_order_id";
+const ORDER_DATA_KEY = "current_order_data";
+const TIMER_END_KEY = "upsell_timer_end";
+
+interface OrderData {
+  quantity: number;
+  price: number;
+  timestamp: number;
+  upsellShown: boolean;
+  downsellShown: boolean;
+  upsellAccepted: boolean;
+  timerExpired: boolean;
+  completed: boolean;
+}
 
 const Success = () => {
   const navigate = useNavigate();
@@ -15,37 +30,157 @@ const Success = () => {
   const [currentOption, setCurrentOption] = useState<
     (typeof upsellOptions)[0] | null
   >(null);
+  const [orderId, setOrderId] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Get quantity from location state or default to 1
-  const originalQuantity = location.state?.quantity || 1;
-  const originalPrice = location.state?.price || 99;
+  // Check if timer expired
+  const isTimerExpired = useCallback((id: string) => {
+    const endTimeStr = localStorage.getItem(`${TIMER_END_KEY}_${id}`);
+    if (!endTimeStr) return false;
+    return Date.now() > parseInt(endTimeStr, 10);
+  }, []);
 
   useEffect(() => {
-    // Find matching upsell option
-    const option = upsellOptions.find(
-      (o) => o.fromQuantity === originalQuantity,
-    );
+    const initializeOrder = () => {
+      let existingOrderId = localStorage.getItem(ORDER_ID_KEY);
+      let orderData: OrderData | null = null;
 
-    if (!option || option.id === 4) {
-      // No upsell for 4 packs, redirect to thank you
-      navigate("/thank-you", { replace: true });
-      return;
+      try {
+        const storedData = localStorage.getItem(ORDER_DATA_KEY);
+        if (storedData) {
+          orderData = JSON.parse(storedData);
+        }
+      } catch (e) {
+        console.error("Failed to parse order data");
+      }
+
+      const freshQuantity = location.state?.quantity;
+      const freshPrice = location.state?.price;
+      const freshOrderId = location.state?.orderId;
+
+      // Check if this is a new order (has fresh state and different from stored)
+      const isNewOrder =
+        freshOrderId && (!existingOrderId || existingOrderId !== freshOrderId);
+
+      if (isNewOrder) {
+        // New order - use provided UUID
+        const newOrderId = freshOrderId;
+        const newOrderData: OrderData = {
+          quantity: freshQuantity,
+          price: freshPrice || 99,
+          timestamp: Date.now(),
+          upsellShown: false,
+          downsellShown: false,
+          upsellAccepted: false,
+          timerExpired: false,
+          completed: false,
+        };
+
+        localStorage.setItem(ORDER_ID_KEY, newOrderId);
+        localStorage.setItem(ORDER_DATA_KEY, JSON.stringify(newOrderData));
+        setOrderId(newOrderId);
+
+        const option = upsellOptions.find(
+          (o) => o.fromQuantity === freshQuantity,
+        );
+
+        if (!option || option.id === 4) {
+          newOrderData.completed = true;
+          localStorage.setItem(ORDER_DATA_KEY, JSON.stringify(newOrderData));
+          navigate("/thank-you", { replace: true });
+          return;
+        }
+
+        setCurrentOption(option);
+        setIsLoading(false);
+
+        // Show upsell after delay
+        setTimeout(() => {
+          setShowUpsell(true);
+          newOrderData.upsellShown = true;
+          localStorage.setItem(ORDER_DATA_KEY, JSON.stringify(newOrderData));
+        }, 1500);
+      } else if (existingOrderId && orderData) {
+        // Existing order - restore state
+        setOrderId(existingOrderId);
+
+        if (orderData.completed) {
+          navigate("/thank-you", { replace: true });
+          return;
+        }
+
+        const option = upsellOptions.find(
+          (o) => o.fromQuantity === orderData!.quantity,
+        );
+        setCurrentOption(option || null);
+        setIsLoading(false);
+
+        // Determine what to show based on stored state and timer
+        const timerExpired = isTimerExpired(existingOrderId);
+        const shouldShowDownsell = timerExpired || orderData.timerExpired;
+
+        if (!orderData.upsellAccepted && !orderData.downsellShown) {
+          if (shouldShowDownsell && option?.hasDownsell) {
+            // Timer expired, show downsell
+            setTimeout(() => {
+              setShowDownsell(true);
+              orderData!.downsellShown = true;
+              orderData!.timerExpired = true;
+              localStorage.setItem(ORDER_DATA_KEY, JSON.stringify(orderData));
+            }, 500);
+          } else if (!orderData.upsellShown) {
+            // First time showing upsell
+            setTimeout(() => {
+              setShowUpsell(true);
+              orderData!.upsellShown = true;
+              localStorage.setItem(ORDER_DATA_KEY, JSON.stringify(orderData));
+            }, 500);
+          } else {
+            // Upsell was shown, timer still running - show upsell again with remaining time
+            setTimeout(() => {
+              setShowUpsell(true);
+            }, 500);
+          }
+        } else if (orderData.downsellShown && !orderData.completed) {
+          // Downsell was shown but not completed - show again
+          setTimeout(() => {
+            setShowDownsell(true);
+          }, 500);
+        } else {
+          navigate("/thank-you", { replace: true });
+        }
+      } else {
+        // No order data - redirect home
+        navigate("/", { replace: true });
+      }
+    };
+
+    initializeOrder();
+  }, [navigate, location.state, isTimerExpired]);
+
+  const updateOrderData = useCallback((updates: Partial<OrderData>) => {
+    try {
+      const stored = localStorage.getItem(ORDER_DATA_KEY);
+      if (stored) {
+        const data = JSON.parse(stored);
+        const updated = { ...data, ...updates };
+        localStorage.setItem(ORDER_DATA_KEY, JSON.stringify(updated));
+      }
+    } catch (e) {
+      console.error("Failed to update order data");
     }
+  }, []);
 
-    // Small delay to show success page briefly, then open modal
-    const timer = setTimeout(() => {
-      setCurrentOption(option);
-      setShowUpsell(true);
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, [originalQuantity, navigate]);
+  const clearOrderData = useCallback(() => {
+    localStorage.removeItem(ORDER_ID_KEY);
+    localStorage.removeItem(ORDER_DATA_KEY);
+    if (orderId) {
+      localStorage.removeItem(`${TIMER_END_KEY}_${orderId}`);
+    }
+  }, [orderId]);
 
   const handleUpsellAccept = async (quantity: number, price: number) => {
     try {
-      // API call to add to order
-      // await addToOrder({ quantity, price });
-
       TagManager.dataLayer({
         dataLayer: {
           event: "upsell_take_success",
@@ -54,7 +189,13 @@ const Success = () => {
         },
       });
 
+      updateOrderData({ upsellAccepted: true, completed: true });
       toast.success("השידרוג בוצע בהצלחה!");
+
+      setTimeout(() => {
+        clearOrderData();
+      }, 1000);
+
       navigate("/thank-you");
     } catch (error) {
       toast.error("אירעה שגיאה, אנא נסה שנית");
@@ -63,20 +204,40 @@ const Success = () => {
 
   const handleUpsellDecline = () => {
     setShowUpsell(false);
+    updateOrderData({ upsellShown: true });
 
-    // Check if has downsell
     if (currentOption?.hasDownsell && currentOption.downsell) {
-      setTimeout(() => setShowDownsell(true), 500);
+      setTimeout(() => {
+        setShowDownsell(true);
+        updateOrderData({ downsellShown: true });
+      }, 500);
     } else {
+      updateOrderData({ completed: true });
+      setTimeout(() => {
+        clearOrderData();
+        navigate("/thank-you");
+      }, 500);
+    }
+  };
+
+  const handleUpsellExpire = () => {
+    // Called when timer actually expires
+    setShowUpsell(false);
+    updateOrderData({ upsellShown: true, timerExpired: true });
+
+    if (currentOption?.hasDownsell && currentOption.downsell) {
+      setTimeout(() => {
+        setShowDownsell(true);
+        updateOrderData({ downsellShown: true });
+      }, 500);
+    } else {
+      updateOrderData({ completed: true });
       navigate("/thank-you");
     }
   };
 
   const handleDownsellAccept = async (quantity: number, price: number) => {
     try {
-      // API call to add to order
-      // await addToOrder({ quantity, price });
-
       TagManager.dataLayer({
         dataLayer: {
           event: "downsell_success",
@@ -85,7 +246,13 @@ const Success = () => {
         },
       });
 
+      updateOrderData({ completed: true });
       toast.success("השידרוג בוצע בהצלחה!");
+
+      setTimeout(() => {
+        clearOrderData();
+      }, 1000);
+
       navigate("/thank-you");
     } catch (error) {
       toast.error("אירעה שגיאה, אנא נסה שנית");
@@ -94,24 +261,33 @@ const Success = () => {
 
   const handleDownsellDecline = () => {
     setShowDownsell(false);
-    navigate("/thank-you");
+    updateOrderData({ completed: true });
+
+    setTimeout(() => {
+      clearOrderData();
+      navigate("/thank-you");
+    }, 500);
   };
 
   const handleCloseUpsell = () => {
-    // X button clicked - treat as decline but show downsell if available
     handleUpsellDecline();
   };
 
   const handleCloseDownsell = () => {
-    // X button clicked on downsell
-    setShowDownsell(false);
-    navigate("/thank-you");
+    handleDownsellDecline();
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Purchases />
-      {/* Background Success Message */}
       <div className="text-center">
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <svg
@@ -134,22 +310,22 @@ const Success = () => {
         <p className="text-gray-600">מעבדים את ההזמנה שלך...</p>
       </div>
 
-      {/* Upsell Modal */}
       <UpsellModal
         isOpen={showUpsell}
         onClose={handleCloseUpsell}
         option={currentOption}
-        originalQuantity={originalQuantity}
+        originalQuantity={currentOption?.fromQuantity || 1}
         onAccept={handleUpsellAccept}
         onDecline={handleUpsellDecline}
+        onExpire={handleUpsellExpire}
+        orderId={orderId}
       />
 
-      {/* Downsell Modal */}
       {currentOption?.downsell && (
         <DownsellModal
           isOpen={showDownsell}
           onClose={handleCloseDownsell}
-          originalQuantity={originalQuantity}
+          originalQuantity={currentOption.fromQuantity}
           addPairs={currentOption.downsell.addPairs}
           addPrice={currentOption.downsell.addPrice}
           totalPairs={currentOption.downsell.totalPairs}

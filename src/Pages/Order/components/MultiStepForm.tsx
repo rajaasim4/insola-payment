@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { createCreditCardTransaction } from "../../../api/backend";
 import { validationSchema } from "../../../utils/schema/validationSchema";
 import type { FormValues } from "../../../types";
+import { v4 as uuidv4 } from "uuid";
 
 function parseExpiryDate(expiryDate: string) {
   const cleaned = String(expiryDate).replace(/\s+/g, "");
@@ -112,8 +113,11 @@ const MultiStepForm = () => {
 
       if (result.tranzila.error_code === 0) {
         // navigate("/success");
+        const orderId = uuidv4(); // Generate UUID
+
         navigate("/success", {
           state: {
+            orderId, // Pass UUID
             quantity: unitsNumber,
             price: unitPrice * unitsNumber,
           },

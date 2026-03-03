@@ -43,11 +43,11 @@ const Purchases = () => {
         <div className="text-right flex">
           <img src="/images/1.png" alt="" className="max-w-14 object-contain" />
           <div className="">
-            <p className="font-semibold text-sm">
+            <p className="font-semibold md:text-sm">
               {purchase.name}, {purchase.city} –{" "}
               {purchase.gender === "male" ? "ביצע רכישה." : "ביצעה רכישה."}
             </p>
-            <p className="text-xs text-gray-500 mt-1 font-semibold">
+            <p className="md:text-xs text-sm text-gray-500 mt-1 font-semibold">
               X{purchase.quantity} זוגות מדרסי Insola כבר נמכרו!
             </p>
           </div>

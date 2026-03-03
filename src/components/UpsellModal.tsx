@@ -1,6 +1,6 @@
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment, useEffect, useState } from "react";
-import { VscChromeClose } from "react-icons/vsc";
+import { Fragment, useEffect, useState, useCallback } from "react";
+import { X } from "lucide-react";
 import type { UpsellOption } from "../types";
 
 interface UpsellModalProps {
@@ -10,7 +10,12 @@ interface UpsellModalProps {
   originalQuantity: number;
   onAccept: (quantity: number, price: number) => void;
   onDecline: () => void;
+  onExpire: () => void;
+  orderId: string;
 }
+
+const TIMER_DURATION = 180; // 3 minutes
+const TIMER_END_KEY = "upsell_timer_end";
 
 export const UpsellModal = ({
   isOpen,
@@ -19,34 +24,87 @@ export const UpsellModal = ({
   originalQuantity,
   onAccept,
   onDecline,
+  onExpire,
+  orderId,
 }: UpsellModalProps) => {
   const [showClose, setShowClose] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(180);
+  const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
+
+  const getTimerKey = useCallback(
+    () => `${TIMER_END_KEY}_${orderId}`,
+    [orderId],
+  );
+
+  const getRemainingTime = useCallback(() => {
+    const endTimeStr = localStorage.getItem(getTimerKey());
+    if (!endTimeStr) return TIMER_DURATION;
+
+    const endTime = parseInt(endTimeStr, 10);
+    const remaining = Math.ceil((endTime - Date.now()) / 1000);
+    return Math.max(0, remaining);
+  }, [getTimerKey]);
 
   useEffect(() => {
     if (!isOpen) {
       setShowClose(false);
-      setTimeLeft(180);
       return;
     }
 
+    const timerKey = getTimerKey();
+    let endTime = localStorage.getItem(timerKey);
+
+    // Only set new end time if not exists
+    if (!endTime) {
+      endTime = String(Date.now() + TIMER_DURATION * 1000);
+      localStorage.setItem(timerKey, endTime);
+    }
+
+    const remaining = getRemainingTime();
+
+    if (remaining <= 0) {
+      // Timer already expired, trigger expire handler
+      onExpire();
+      return;
+    }
+
+    setTimeLeft(remaining);
+
+    // Show close button after 7 seconds (only once)
     const closeTimer = setTimeout(() => setShowClose(true), 7000);
-    const countdown = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(countdown);
-          onDecline();
-          return 0;
-        }
-        return prev - 1;
-      });
+
+    // Countdown
+    const interval = setInterval(() => {
+      const current = getRemainingTime();
+      setTimeLeft(current);
+
+      if (current <= 0) {
+        clearInterval(interval);
+        onExpire();
+      }
     }, 1000);
 
     return () => {
       clearTimeout(closeTimer);
-      clearInterval(countdown);
+      clearInterval(interval);
     };
-  }, [isOpen, onDecline]);
+  }, [isOpen, orderId, onExpire, getTimerKey, getRemainingTime]);
+
+  const handleAccept = (quantity: number, price: number) => {
+    localStorage.removeItem(getTimerKey());
+    onAccept(quantity, price);
+  };
+
+  const handleDecline = () => {
+    localStorage.removeItem(getTimerKey());
+    onDecline();
+  };
+
+  const handleClose = () => {
+    if (showClose) {
+      localStorage.removeItem(getTimerKey());
+      onClose();
+    }
+  };
 
   if (!option) return null;
 
@@ -58,11 +116,7 @@ export const UpsellModal = ({
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog
-        as="div"
-        className="relative z-50"
-        onClose={() => showClose && onClose()}
-      >
+      <Dialog as="div" className="relative z-50" onClose={handleClose}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -86,18 +140,16 @@ export const UpsellModal = ({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-right shadow-xl transition-all relative">
-                {/* Close Button */}
+              <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-right shadow-xl transition-all relative">
                 {showClose && (
                   <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="absolute top-4 left-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
                   >
-                    <VscChromeClose className="w-5 h-5 text-gray-500" />
+                    <X className="w-5 h-5 text-gray-500" />
                   </button>
                 )}
 
-                {/* Success Message */}
                 <div className="mb-6 text-center">
                   <p className="text-green-600 font-bold text-lg mb-2">
                     תודה! ההזמנה שלך בוצעה בהצלחה ✅
@@ -105,14 +157,12 @@ export const UpsellModal = ({
                   <p className="text-gray-600">רק לפני שנסיים…</p>
                 </div>
 
-                {/* Timer */}
                 <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-3 text-center">
                   <p className="text-red-600 font-bold text-sm">
                     הצעה בלעדית עקב המצב הנוכחי – נותרו {formatTime(timeLeft)}
                   </p>
                 </div>
 
-                {/* Content */}
                 <div className="space-y-4">
                   <p className="text-sm text-gray-700 leading-relaxed">
                     הצעה חד פעמית לרוכשים: אל תישארו עם {originalQuantity}{" "}
@@ -148,10 +198,9 @@ export const UpsellModal = ({
                     </p>
                   </div>
 
-                  {/* Accept Button */}
                   <button
                     onClick={() =>
-                      onAccept(option.totalPairs, option.totalPrice)
+                      handleAccept(option.totalPairs, option.totalPrice)
                     }
                     className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-[1.02] shadow-lg"
                   >
@@ -168,9 +217,8 @@ export const UpsellModal = ({
                     חינם על השידרוג.
                   </p>
 
-                  {/* Decline Link */}
                   <button
-                    onClick={onDecline}
+                    onClick={handleDecline}
                     className="w-full text-gray-500 hover:text-gray-700 text-sm underline py-2"
                   >
                     לא תודה, אשמור על ההזמנה הנוכחית שלי

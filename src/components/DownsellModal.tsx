@@ -66,7 +66,7 @@ export const DownsellModal = ({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-right shadow-xl transition-all relative">
+              <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-right shadow-xl transition-all relative">
                 {/* Close Button - No Timer */}
                 {showClose && (
                   <button
