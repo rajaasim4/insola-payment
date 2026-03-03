@@ -41,7 +41,7 @@ const Purchases = () => {
 
       toast(
         <div className="text-right flex">
-          <img src="/images/1.png" alt="" className="max-w-14 object-contain" />
+          <img src="/images/1.png" alt="" className="max-w-12 object-contain" />
           <div className="">
             <p className="font-semibold md:text-sm">
               {purchase.name}, {purchase.city} –{" "}
