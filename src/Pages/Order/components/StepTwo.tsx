@@ -3,7 +3,7 @@ import type { StepProps } from "../../../types";
 
 function formatPhoneNumber(input: string): string {
   // Remove all non-digit characters
-  const digits = input.replace(/\D/g, '');
+  const digits = input.replace(/\D/g, "");
   // Limit to 15 digits (Tranzila max)
   return digits.slice(0, 15);
 }
@@ -20,7 +20,7 @@ const StepTwo: React.FC<StepProps> = ({
     <div>
       <div className="flex items-center gap-0.5 mb-4">
         <FaUserLarge />
-        <h2 className="font-bold text-base">שלב 1: פרטי לקוח</h2>
+        <h2 className="font-bold text-base">שלב 2: פרטי לקוח</h2>
       </div>
       <div className="">
         <div className="grid md:grid-cols-2 gap-5">
@@ -102,8 +102,17 @@ const StepTwo: React.FC<StepProps> = ({
               onChange={handleChange}
             />
             <span className="text-xs text-gray-500 text-right">
-              אני מעוניין לקבל הודעות SMS ושיחות טלפון מהחברה על הצעות ועדכונים
-              – כולל שיחות אוטומטיות או עם סיוע חכם.
+              אני מאשר/ת את{" "}
+              <a
+                href="https://ba-media.co.il/privacy-policy/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline"
+              >
+                מדיניות הפרטיות
+              </a>{" "}
+              ומעוניין לקבל הודעות SMS ושיחות טלפון מהחברה על הצעות ועדכונים –
+              כולל שיחות אוטומטיות או עם סיוע חכם.
             </span>
           </label>
         </div>
@@ -117,13 +126,14 @@ const StepTwo: React.FC<StepProps> = ({
               type="tel"
               name="phoneNumber"
               id="phoneNumber"
-              className="py-2 pr-3 flex-1"
+              className="py-2 pr-3 text-right outline-none w-full"
               placeholder="0501234567"
               value={values.phoneNumber}
-              onChange={(e) => {
-                const formatted = formatPhoneNumber(e.target.value);
-                setFieldValue('phoneNumber', formatted);
-              }}
+              // onChange={(e) => {
+              //   const formatted = formatPhoneNumber(e.target.value);
+              //   setFieldValue("phoneNumber", formatted);
+              // }}
+              onChange={handleChange}
               onBlur={handleBlur}
               inputMode="numeric"
             />

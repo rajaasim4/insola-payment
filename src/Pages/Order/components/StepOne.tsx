@@ -77,9 +77,12 @@ const StepOne: React.FC<StepProps> = ({
     <div>
       {/* Discount Header */}
       <div className="grid sm:grid-flow-col gap-2 mb-5">
-        <div className="">
+        <div className="relative">
+          <span className="text-2xl font-bold text-red-500 absolute top-6 sm:left-4 left-1/2 max-sm:-translate-x-1/2">
+            70%
+          </span>
           <img
-            src="/images/off.png"
+            src="/images/badge.png"
             className="size-20 object-contain max-sm:mx-auto"
           />
         </div>
@@ -89,13 +92,13 @@ const StepOne: React.FC<StepProps> = ({
           </h4>
           <p className="font-bold mt-1">
             <span className="text-[#C73126]">הצעה לזמן מוגבל בלבד:</span> Insola
-            זמין במחיר חסר תקדים ₪92.00 ₪306.67 (70% הנחה ליחידה)
+            זמין במחיר חסר תקדים ₪99 ₪3330 (70% הנחה ליחידה)
           </p>
         </div>
       </div>
       <div className="flex items-center gap-0.5 mb-4">
         <FaCalendarCheck />
-        <h2 className="font-bold text-base">שלב 2: בחרו מידה וכמות</h2>
+        <h2 className="font-bold text-base">שלב 1: בחרו מידה וכמות</h2>
       </div>
 
       <div className="space-y-4 mt-8">

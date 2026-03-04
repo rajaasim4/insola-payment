@@ -44,7 +44,6 @@ const StepFour: React.FC = () => {
 
   const finalTotal = basePrice + shipping + warrantyTotal;
 
-
   return (
     <div>
       {/* Card Number */}
@@ -73,6 +72,7 @@ const StepFour: React.FC = () => {
           <span>₪{finalTotal.toFixed(2)}</span>
         </div>
       </div>
+      <img src="/images/logo-mar.jpg" className="" alt="" />
       <div className="mb-4">
         <label className="block text-right text-sm font-semibold mb-1">
           מספר כרטיס
@@ -176,12 +176,10 @@ const StepFour: React.FC = () => {
         type="button"
         onClick={handleSubmit}
         disabled={isSubmitting}
-        className="w-full bg-[#5cb85c] hover:bg-[#4cae4c] text-white font-bold py-3 px-6 rounded transition-colors disabled:bg-gray-400"
+        className={`w-full bg-[#5cb85c] hover:bg-[#4cae4c] text-white font-bold py-3 px-6 rounded transition-colors disabled:bg-gray-400  ${isSubmitting ? "cursor-not-allowed" : "cursor-pointer"}`}
       >
         {isSubmitting ? "שולח..." : "כן, שלחו לי את ה-Insola שלי עכשיו!"}
       </button>
-
-
 
       {/* SSL Security Footer */}
       <div className="text-center mt-4">
