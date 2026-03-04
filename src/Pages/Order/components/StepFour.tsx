@@ -43,6 +43,8 @@ const StepFour: React.FC = () => {
   const warrantyTotal = values.warranty ? warrantyUnitPrice * quantity : 0;
 
   const finalTotal = basePrice + shipping + warrantyTotal;
+
+
   return (
     <div>
       {/* Card Number */}
@@ -178,6 +180,8 @@ const StepFour: React.FC = () => {
       >
         {isSubmitting ? "שולח..." : "כן, שלחו לי את ה-Insola שלי עכשיו!"}
       </button>
+
+
 
       {/* SSL Security Footer */}
       <div className="text-center mt-4">

@@ -2,13 +2,15 @@ import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useEffect, useState, useCallback } from "react";
 import { X } from "lucide-react";
 import type { UpsellOption } from "../types";
+import { createPayWithSavedTransaction, checkHasSavedCard } from "../api/backend";
+import { toast } from "sonner";
 
 interface UpsellModalProps {
   isOpen: boolean;
   onClose: () => void;
   option: UpsellOption | null;
   originalQuantity: number;
-  onAccept: (quantity: number, price: number) => void;
+  onAccept: (quantity: number, price: number, transactionId: string) => void;
   onDecline: () => void;
   onExpire: () => void;
   orderId: string;
@@ -29,6 +31,9 @@ export const UpsellModal = ({
 }: UpsellModalProps) => {
   const [showClose, setShowClose] = useState(false);
   const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
+  const [showCvvModal, setShowCvvModal] = useState(false);
+  const [cvv, setCvv] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const getTimerKey = useCallback(
     () => `${TIMER_END_KEY}_${orderId}`,
@@ -89,9 +94,59 @@ export const UpsellModal = ({
     };
   }, [isOpen, orderId, onExpire, getTimerKey, getRemainingTime]);
 
-  const handleAccept = (quantity: number, price: number) => {
-    localStorage.removeItem(getTimerKey());
-    onAccept(quantity, price);
+  const handleAccept = async () => {
+    // Check if saved card exists via backend API (httpOnly cookies)
+    const hasSavedCard = await checkHasSavedCard();
+    
+    if (!hasSavedCard) {
+      toast.error("לא נמצא כרטיס שמור. אנא צור קשר עם התמיכה.");
+      return;
+    }
+    
+    setCvv("");
+    setShowCvvModal(true);
+  };
+
+  const handleConfirmPayment = async () => {
+    if (isProcessing || !option) return;
+
+    const trimmed = cvv.replace(/\D/g, "").slice(0, 4);
+    if (trimmed.length !== 3 && trimmed.length !== 4) {
+      toast.error("אנא הזן/י CVV תקין (3-4 ספרות)");
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const items = [
+        {
+          name: `שדרוג ל-${option.totalPairs} זוגות Insola`,
+          type: "I",
+          unit_price: option.addPrice,
+          units_number: 1,
+        },
+      ];
+
+      const result = await createPayWithSavedTransaction({
+        txn_type: "debit",
+        cvv: trimmed,
+        items,
+      });
+
+      if (result.tranzila.error_code === 0) {
+        localStorage.removeItem(getTimerKey());
+        setShowCvvModal(false);
+        onAccept(option.totalPairs, option.totalPrice, result.stored_transaction_id);
+      } else {
+        toast.error(result.tranzila.message || "התשלום נכשל");
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "התשלום נכשל";
+      toast.error(msg);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleDecline = () => {
@@ -199,10 +254,9 @@ export const UpsellModal = ({
                   </div>
 
                   <button
-                    onClick={() =>
-                      handleAccept(option.totalPairs, option.totalPrice)
-                    }
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-[1.02] shadow-lg"
+                    onClick={handleAccept}
+                    disabled={isProcessing}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-[1.02] shadow-lg disabled:bg-gray-400"
                   >
                     כן! השלם לחבילת {option.totalPairs} זוגות מדרסים
                     <br />
@@ -228,6 +282,49 @@ export const UpsellModal = ({
             </Transition.Child>
           </div>
         </div>
+
+        {/* CVV Modal */}
+        {showCvvModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
+            <div className="w-full max-w-sm rounded-lg bg-white p-6 text-right shadow-2xl">
+              <div className="text-xl font-bold mb-4">הזן/י CVV לאישור התשלום</div>
+              <p className="text-sm text-gray-600 mb-4">
+                לאבטחת התשלום, אנא הזן/י את קוד ה-CVV של הכרטיס
+              </p>
+              <input
+                type="text"
+                value={cvv}
+                onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                inputMode="numeric"
+                autoComplete="cc-csc"
+                placeholder="CVV"
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-right text-lg focus:border-green-500 focus:outline-none"
+                autoFocus
+              />
+              <div className="mt-6 flex gap-3 justify-end">
+                <button
+                  type="button"
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-900 font-bold py-3 px-6 rounded-lg transition-colors"
+                  onClick={() => {
+                    setShowCvvModal(false);
+                    setCvv("");
+                  }}
+                  disabled={isProcessing}
+                >
+                  ביטול
+                </button>
+                <button
+                  type="button"
+                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors disabled:bg-gray-400"
+                  onClick={handleConfirmPayment}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? "מעבד..." : "אישור תשלום"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </Dialog>
     </Transition>
   );

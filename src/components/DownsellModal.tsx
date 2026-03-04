@@ -1,6 +1,8 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useEffect, useState } from "react";
 import { VscChromeClose } from "react-icons/vsc";
+import { createPayWithSavedTransaction, checkHasSavedCard } from "../api/backend";
+import { toast } from "sonner";
 
 interface DownsellModalProps {
   isOpen: boolean;
@@ -10,7 +12,7 @@ interface DownsellModalProps {
   addPrice: number;
   totalPairs: number;
   totalPrice: number;
-  onAccept: (quantity: number, price: number) => void;
+  onAccept: (quantity: number, price: number, transactionId: string) => void;
   onDecline: () => void;
 }
 
@@ -26,6 +28,9 @@ export const DownsellModal = ({
   onDecline,
 }: DownsellModalProps) => {
   const [showClose, setShowClose] = useState(false);
+  const [showCvvModal, setShowCvvModal] = useState(false);
+  const [cvv, setCvv] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
@@ -114,8 +119,17 @@ export const DownsellModal = ({
                   </div>
 
                   <button
-                    onClick={() => onAccept(totalPairs, totalPrice)}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl transition-all"
+                    onClick={async () => {
+                      const hasSavedCard = await checkHasSavedCard();
+                      if (!hasSavedCard) {
+                        toast.error("לא נמצא כרטיס שמור. אנא צור קשר עם התמיכה.");
+                        return;
+                      }
+                      setCvv("");
+                      setShowCvvModal(true);
+                    }}
+                    disabled={isProcessing}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl transition-all disabled:bg-gray-400"
                   >
                     כן! השלם לחבילת {totalPairs} זוגות מדרסים
                     <br />
@@ -141,6 +155,88 @@ export const DownsellModal = ({
             </Transition.Child>
           </div>
         </div>
+
+        {/* CVV Modal */}
+        {showCvvModal && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 p-4">
+            <div className="w-full max-w-sm rounded-lg bg-white p-6 text-right shadow-2xl">
+              <div className="text-xl font-bold mb-4">הזן/י CVV לאישור התשלום</div>
+              <p className="text-sm text-gray-600 mb-4">
+                לאבטחת התשלום, אנא הזן/י את קוד ה-CVV של הכרטיס
+              </p>
+              <input
+                type="text"
+                value={cvv}
+                onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                inputMode="numeric"
+                autoComplete="cc-csc"
+                placeholder="CVV"
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-right text-lg focus:border-blue-500 focus:outline-none"
+                autoFocus
+              />
+              <div className="mt-6 flex gap-3 justify-end">
+                <button
+                  type="button"
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-900 font-bold py-3 px-6 rounded-lg transition-colors"
+                  onClick={() => {
+                    setShowCvvModal(false);
+                    setCvv("");
+                  }}
+                  disabled={isProcessing}
+                >
+                  ביטול
+                </button>
+                <button
+                  type="button"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors disabled:bg-gray-400"
+                  onClick={async () => {
+                    if (isProcessing) return;
+
+                    const trimmed = cvv.replace(/\D/g, "").slice(0, 4);
+                    if (trimmed.length !== 3 && trimmed.length !== 4) {
+                      toast.error("אנא הזן/י CVV תקין (3-4 ספרות)");
+                      return;
+                    }
+
+                    setIsProcessing(true);
+
+                    try {
+                      const items = [
+                        {
+                          name: `שדרוג ל-${totalPairs} זוגות Insola`,
+                          type: "I",
+                          unit_price: addPrice,
+                          units_number: 1,
+                        },
+                      ];
+
+                      const result = await createPayWithSavedTransaction({
+                        txn_type: "debit",
+                        cvv: trimmed,
+                        items,
+                      });
+
+                      if (result.tranzila.error_code === 0) {
+                        setShowCvvModal(false);
+                        onAccept(totalPairs, totalPrice, result.stored_transaction_id);
+                      } else {
+                        toast.error(result.tranzila.message || "התשלום נכשל");
+                      }
+                    } catch (e) {
+                      const msg = e instanceof Error ? e.message : "התשלום נכשל";
+                      toast.error(msg);
+                    } finally {
+                      setIsProcessing(false);
+                    }
+                  }}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? "מעבד..." : "אישור תשלום"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </Dialog>
     </Transition>
   );

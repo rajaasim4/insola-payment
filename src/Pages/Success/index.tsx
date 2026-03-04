@@ -20,6 +20,8 @@ interface OrderData {
   upsellAccepted: boolean;
   timerExpired: boolean;
   completed: boolean;
+  upsellTransactionId?: string;
+  downsellTransactionId?: string;
 }
 
 const Success = () => {
@@ -179,24 +181,24 @@ const Success = () => {
     }
   }, [orderId]);
 
-  const handleUpsellAccept = async (quantity: number, price: number) => {
+  const handleUpsellAccept = async (quantity: number, price: number, transactionId: string) => {
     try {
       TagManager.dataLayer({
         dataLayer: {
           event: "upsell_take_success",
           value: price,
           quantity: quantity,
+          transaction_id: transactionId,
         },
       });
 
-      updateOrderData({ upsellAccepted: true, completed: true });
+      updateOrderData({ upsellAccepted: true, completed: true, upsellTransactionId: transactionId });
       toast.success("השידרוג בוצע בהצלחה!");
 
       setTimeout(() => {
+        navigate("/thank-you", { state: { transactionId } });
         clearOrderData();
       }, 1000);
-
-      navigate("/thank-you");
     } catch (error) {
       toast.error("אירעה שגיאה, אנא נסה שנית");
     }
@@ -236,24 +238,24 @@ const Success = () => {
     }
   };
 
-  const handleDownsellAccept = async (quantity: number, price: number) => {
+  const handleDownsellAccept = async (quantity: number, price: number, transactionId: string) => {
     try {
       TagManager.dataLayer({
         dataLayer: {
           event: "downsell_success",
           value: price,
           quantity: quantity,
+          transaction_id: transactionId,
         },
       });
 
-      updateOrderData({ completed: true });
+      updateOrderData({ completed: true, downsellTransactionId: transactionId });
       toast.success("השידרוג בוצע בהצלחה!");
 
       setTimeout(() => {
+        navigate("/thank-you", { state: { transactionId } });
         clearOrderData();
       }, 1000);
-
-      navigate("/thank-you");
     } catch (error) {
       toast.error("אירעה שגיאה, אנא נסה שנית");
     }

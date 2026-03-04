@@ -1,4 +1,9 @@
+import { useLocation } from "react-router-dom";
+
 const ThankYou = () => {
+  const location = useLocation();
+  const transactionId = location.state?.transactionId || "N/A";
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
@@ -24,7 +29,7 @@ const ThankYou = () => {
           ההזמנה שלך התקבלה בהצלחה. קבלה נשלחה לאימייל שלך.
         </p>
         <p className="text-sm text-gray-500">
-          מספר הזמנה: #{Math.random().toString(36).substr(2, 9).toUpperCase()}
+          מספר הזמנה: #{typeof transactionId === 'string' ? transactionId : transactionId.toString()}
         </p>
       </div>
     </div>

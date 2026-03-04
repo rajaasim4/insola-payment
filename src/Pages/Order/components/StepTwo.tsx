@@ -1,12 +1,20 @@
 import { FaUserLarge } from "react-icons/fa6";
 import type { StepProps } from "../../../types";
 
+function formatPhoneNumber(input: string): string {
+  // Remove all non-digit characters
+  const digits = input.replace(/\D/g, '');
+  // Limit to 15 digits (Tranzila max)
+  return digits.slice(0, 15);
+}
+
 const StepTwo: React.FC<StepProps> = ({
   values,
   handleChange,
   handleBlur,
   errors,
   touched,
+  setFieldValue,
 }) => {
   return (
     <div>
@@ -106,14 +114,18 @@ const StepTwo: React.FC<StepProps> = ({
           <div className="border rounded-md flex border-gray-300">
             <div className="border-l border-l-gray-300"></div>
             <input
-              type="text"
+              type="tel"
               name="phoneNumber"
               id="phoneNumber"
               className="py-2 pr-3 flex-1"
-              placeholder="מספר טלפון"
+              placeholder="0501234567"
               value={values.phoneNumber}
-              onChange={handleChange}
+              onChange={(e) => {
+                const formatted = formatPhoneNumber(e.target.value);
+                setFieldValue('phoneNumber', formatted);
+              }}
               onBlur={handleBlur}
+              inputMode="numeric"
             />
           </div>
           {touched.phoneNumber && errors.phoneNumber && (
