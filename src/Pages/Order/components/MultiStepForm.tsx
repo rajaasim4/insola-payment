@@ -61,7 +61,7 @@ const MultiStepForm = () => {
     cardNumber: formData.cardNumber || "",
     cvv: formData.cvv || "",
     expiryDate: formData.expiryDate || "",
-    termsAccepted: formData.termsAccepted || false,
+    // termsAccepted: formData.termsAccepted || false,
   };
 
   const handleSubmit = async (

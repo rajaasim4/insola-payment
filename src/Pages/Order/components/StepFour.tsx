@@ -21,7 +21,7 @@ const StepFour: React.FC = () => {
     submitForm,
     values,
     isSubmitting,
-    handleChange,
+    // handleChange,
     handleBlur,
     touched,
     setFieldValue,
