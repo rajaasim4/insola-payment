@@ -9,14 +9,14 @@ const Footer = () => {
   ];
   return (
     <footer className="bg-[#393939] py-10">
-      <div className="w-full   mx-auto max-w-5xl flex justify-between">
+      <div className="w-full   mx-auto max-w-5xl flex justify-between md:flex-row flex-col max-md:items-center">
         <img
           src="/images/logo.png"
           alt=""
           className="max-w-50 object-contain"
         />
         <div className="">
-          <div className="flex flex-col gap-y-1">
+          <div className="flex flex-col gap-y-1 max-md:text-center">
             {footerLinks.map((link, index) => (
               <a
                 key={index}
