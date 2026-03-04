@@ -304,12 +304,14 @@ const MultiStepForm = () => {
         clearSensitive();
 
         const orderId = uuidv4();
+        const transactionId = result.stored_transaction_id || orderId;
 
         navigate("/success", {
           state: {
             orderId,
             quantity: unitsNumber,
             price: unitPrice * unitsNumber,
+            initialTransactionId: transactionId,
           },
         });
         return;

@@ -20,6 +20,7 @@ interface OrderData {
   upsellAccepted: boolean;
   timerExpired: boolean;
   completed: boolean;
+  initialTransactionId?: string;
   upsellTransactionId?: string;
   downsellTransactionId?: string;
 }
@@ -59,6 +60,7 @@ const Success = () => {
       const freshQuantity = location.state?.quantity;
       const freshPrice = location.state?.price;
       const freshOrderId = location.state?.orderId;
+      const freshTransactionId = location.state?.initialTransactionId;
 
       // Check if this is a new order (has fresh state and different from stored)
       const isNewOrder =
@@ -76,6 +78,7 @@ const Success = () => {
           upsellAccepted: false,
           timerExpired: false,
           completed: false,
+          initialTransactionId: freshTransactionId,
         };
 
         localStorage.setItem(ORDER_ID_KEY, newOrderId);
@@ -183,6 +186,9 @@ const Success = () => {
 
   const handleUpsellAccept = async (quantity: number, price: number, transactionId: string) => {
     try {
+      // Immediately close upsell modal
+      setShowUpsell(false);
+      
       TagManager.dataLayer({
         dataLayer: {
           event: "upsell_take_success",
@@ -216,8 +222,11 @@ const Success = () => {
     } else {
       updateOrderData({ completed: true });
       setTimeout(() => {
+        const stored = localStorage.getItem(ORDER_DATA_KEY);
+        const orderData = stored ? JSON.parse(stored) : null;
+        const transactionId = orderData?.initialTransactionId;
         clearOrderData();
-        navigate("/thank-you");
+        navigate("/thank-you", { state: { transactionId } });
       }, 500);
     }
   };
@@ -234,7 +243,10 @@ const Success = () => {
       }, 500);
     } else {
       updateOrderData({ completed: true });
-      navigate("/thank-you");
+      const stored = localStorage.getItem(ORDER_DATA_KEY);
+      const orderData = stored ? JSON.parse(stored) : null;
+      const transactionId = orderData?.initialTransactionId;
+      navigate("/thank-you", { state: { transactionId } });
     }
   };
 
@@ -266,8 +278,11 @@ const Success = () => {
     updateOrderData({ completed: true });
 
     setTimeout(() => {
+      const stored = localStorage.getItem(ORDER_DATA_KEY);
+      const orderData = stored ? JSON.parse(stored) : null;
+      const transactionId = orderData?.initialTransactionId;
       clearOrderData();
-      navigate("/thank-you");
+      navigate("/thank-you", { state: { transactionId } });
     }, 500);
   };
 
@@ -323,7 +338,7 @@ const Success = () => {
         orderId={orderId}
       />
 
-      {currentOption?.downsell && (
+      {currentOption?.downsell && !showUpsell && (
         <DownsellModal
           isOpen={showDownsell}
           onClose={handleCloseDownsell}
