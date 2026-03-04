@@ -72,7 +72,7 @@ const StepFour: React.FC = () => {
           <span>₪{finalTotal.toFixed(2)}</span>
         </div>
       </div>
-      <img src="/images/logo-mar.jpg" className="" alt="" />
+
       <div className="mb-4">
         <label className="block text-right text-sm font-semibold mb-1">
           מספר כרטיס

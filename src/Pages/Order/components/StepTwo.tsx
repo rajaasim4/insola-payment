@@ -98,8 +98,8 @@ const StepTwo: React.FC<StepProps> = ({
               type="checkbox"
               name="marketingSMS"
               className="mt-0.5 accent-green-600"
-              checked={values.marketingSMS}
               onChange={handleChange}
+              checked
             />
             <span className="text-xs text-gray-500 text-right">
               אני מאשר/ת את{" "}
