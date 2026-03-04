@@ -42,7 +42,7 @@ export interface FormValues {
   cardNumber: string;
   cvv: string;
   expiryDate: string;
-  termsAccepted: boolean;
+  // termsAccepted: boolean;
 }
 
 export interface StepProps {

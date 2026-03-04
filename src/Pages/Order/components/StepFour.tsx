@@ -96,7 +96,6 @@ const StepFour: React.FC = () => {
           </p>
         ) : null}
       </div>
-
       {/* CVV and Expiry */}
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
@@ -147,10 +146,12 @@ const StepFour: React.FC = () => {
           ) : null}
         </div>
       </div>
-
       {/* Security Badges */}
-
-      {/* Terms Checkbox */}
+      <div className="flex my-5 gap-4 justify-center">
+        <img src="/images/pci.png" className="max-w-30" alt="" />
+        <img src="/images/mcafee.png" className="max-w-30" alt="" />
+      </div>
+      {/* Terms Checkbox
       <div className="flex items-center justify-start gap-2 mb-4">
         <input
           type="checkbox"
@@ -169,8 +170,7 @@ const StepFour: React.FC = () => {
             מדיניות הפרטיות
           </a>
         </label>
-      </div>
-
+      </div> */}
       {/* Submit Button */}
       <button
         type="button"
@@ -180,7 +180,6 @@ const StepFour: React.FC = () => {
       >
         {isSubmitting ? "שולח..." : "כן, שלחו לי את ה-Insola שלי עכשיו!"}
       </button>
-
       {/* SSL Security Footer */}
       <div className="text-center mt-4">
         <div className="flex items-center justify-center gap-1 text-sm font-medium">

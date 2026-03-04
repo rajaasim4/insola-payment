@@ -69,7 +69,7 @@ interface PersistentFormData {
   shippingCost: string;
   price: string;
   quantity: string;
-  termsAccepted: boolean;
+  // termsAccepted: boolean;
 }
 
 // Persistent atom (localStorage) - NO sensitive data
@@ -93,7 +93,7 @@ export const persistentFormAtom = atomWithStorage<PersistentFormData>(
     shippingCost: "15",
     price: "299.00",
     quantity: "4",
-    termsAccepted: false,
+    // termsAccepted: false,
   },
 );
 

@@ -67,5 +67,5 @@ export const validationSchema = Yup.object({
   expiryDate: Yup.string()
     .required("נא להזין תוקף כרטיס")
     .matches(/^(0[1-9]|1[0-2])\s*\/\s*(\d{2}|\d{4})$/, "תוקף לא תקין (MM/YY)"),
-  termsAccepted: Yup.boolean().oneOf([true], "נא לאשר את התנאים"),
+  // termsAccepted: Yup.boolean().oneOf([true], "נא לאשר את התנאים"),
 });
