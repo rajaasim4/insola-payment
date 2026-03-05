@@ -110,7 +110,9 @@ const Success = () => {
         setOrderId(existingOrderId);
 
         if (orderData.completed) {
-          navigate("/thank-you", { replace: true });
+          // Order already completed - redirect to home (prevent back navigation)
+          clearOrderData();
+          navigate("/", { replace: true });
           return;
         }
 
@@ -155,7 +157,11 @@ const Success = () => {
           navigate("/thank-you", { replace: true });
         }
       } else {
-        // No order data - redirect home
+        // No order data and no fresh state - redirect home (direct access)
+        if (!freshOrderId) {
+          navigate("/", { replace: true });
+          return;
+        }
         navigate("/", { replace: true });
       }
     };

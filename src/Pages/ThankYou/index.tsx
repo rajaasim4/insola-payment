@@ -1,8 +1,31 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const ThankYou = () => {
   const location = useLocation();
-  const transactionId = location.state?.transactionId || "N/A";
+  const navigate = useNavigate();
+  const transactionId = location.state?.transactionId;
+
+  useEffect(() => {
+
+    if (!transactionId) {
+      navigate("/", { replace: true });
+      return;
+    }
+
+    
+    window.history.pushState(null, '', window.location.href);
+    const handlePopState = () => {
+      window.history.pushState(null, '', window.location.href);
+      navigate("/", { replace: true });
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [transactionId, navigate]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -29,7 +52,7 @@ const ThankYou = () => {
           ההזמנה שלך התקבלה בהצלחה. קבלה נשלחה לאימייל שלך.
         </p>
         <p className="text-sm text-gray-500">
-          מספר הזמנה: #{typeof transactionId === 'string' ? transactionId : transactionId.toString()}
+          מספר הזמנה: #{transactionId}
         </p>
       </div>
     </div>
