@@ -16,7 +16,7 @@ export interface FormValues {
   // Step 1: Product selection
   selectedProductId: number;
   size: string;
-  warranty: boolean;
+  // warranty: boolean;
   price: string;
   quantity: string;
 

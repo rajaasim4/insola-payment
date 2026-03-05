@@ -189,7 +189,7 @@ const StepOne: React.FC<StepProps> = ({
           );
         })}
       </div>
-      <label className="flex items-center gap-2 mt-4 cursor-pointer group">
+      {/* <label className="flex items-center gap-2 mt-4 cursor-pointer group">
         <input
           type="checkbox"
           name="warranty"
@@ -200,7 +200,7 @@ const StepOne: React.FC<StepProps> = ({
         <div className="flex items-center gap-1.5 text-sm text-gray-600">
           אני רוצה אחריות לשלוש שנים עבור ₪4.00 ליחידה
         </div>
-      </label>
+      </label> */}
     </div>
   );
 };

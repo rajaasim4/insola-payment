@@ -39,10 +39,11 @@ const StepFour: React.FC = () => {
   const quantity = Number(values.quantity) || 0;
   const shipping = Number(values.shippingCost) || 0;
 
-  const warrantyUnitPrice = 4;
-  const warrantyTotal = values.warranty ? warrantyUnitPrice * quantity : 0;
+  // const warrantyUnitPrice = 4;
+  // const warrantyTotal = values.warranty ? warrantyUnitPrice * quantity : 0;
 
-  const finalTotal = basePrice + shipping + warrantyTotal;
+  const finalTotal = basePrice + shipping;
+  // + warrantyTotal;
 
   return (
     <div>
@@ -55,12 +56,12 @@ const StepFour: React.FC = () => {
           <span>₪{basePrice.toFixed(2)}</span>
         </div>
 
-        {values.warranty && (
+        {/* {values.warranty && (
           <div className="flex justify-between text-sm">
             <span>אחריות (₪4 × {quantity}):</span>
             <span>₪{warrantyTotal.toFixed(2)}</span>
           </div>
-        )}
+        )} */}
 
         <div className="flex justify-between text-sm">
           <span>משלוח עד הבית:</span>

@@ -20,7 +20,7 @@ export const validationSchema = Yup.object({
   // Step 1
   selectedProductId: Yup.number().required(),
   size: Yup.string().required("נא לבחור מידה"),
-  warranty: Yup.boolean(),
+  // warranty: Yup.boolean(),
   price: Yup.string(),
   quantity: Yup.string(),
 
