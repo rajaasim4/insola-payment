@@ -371,6 +371,7 @@ import { upsellOptions } from "../../data/upsellOptions";
 import { toast } from "sonner";
 import TagManager from "react-gtm-module";
 import Purchases from "../Order/components/Purchases";
+import { createOrder } from "../../api/orders";
 
 const ORDER_ID_KEY = "current_order_id";
 const ORDER_DATA_KEY = "current_order_data";
@@ -388,6 +389,17 @@ interface OrderData {
   initialTransactionId?: string;
   upsellTransactionId?: string;
   downsellTransactionId?: string;
+  // Store user info for upsell/downsell orders
+  userInfo?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+    city: string;
+    streetAddress: string;
+    postalCode: string;
+    country: string;
+  };
 }
 
 const Success = () => {
@@ -426,6 +438,7 @@ const Success = () => {
       const freshPrice = location.state?.price;
       const freshOrderId = location.state?.orderId;
       const freshTransactionId = location.state?.initialTransactionId;
+      const freshUserInfo = location.state?.userInfo;
 
       // Check if this is a new order (has fresh state and different from stored)
       const isNewOrder =
@@ -444,6 +457,7 @@ const Success = () => {
           timerExpired: false,
           completed: false,
           initialTransactionId: freshTransactionId,
+          userInfo: freshUserInfo,
         };
 
         localStorage.setItem(ORDER_ID_KEY, newOrderId);
@@ -573,6 +587,30 @@ const Success = () => {
         },
       });
 
+      // Save upsell order to database
+      const stored = localStorage.getItem(ORDER_DATA_KEY);
+      const orderData = stored ? JSON.parse(stored) : null;
+      if (orderData?.userInfo) {
+        try {
+          await createOrder({
+            ...orderData.userInfo,
+            quantity: quantity,
+            price: price / quantity,
+            totalAmount: price,
+            shippingCost: 0,
+            transactionId: transactionId,
+            paymentStatus: 'success',
+            orderSource: 'upsell',
+            isUpsell: true,
+            isDownsell: false,
+            originalOrderId: orderData.initialTransactionId,
+          });
+          console.log('✅ Upsell order saved successfully');
+        } catch (orderError) {
+          console.error('❌ Failed to save upsell order:', orderError);
+        }
+      }
+
       updateOrderData({
         upsellAccepted: true,
         completed: true,
@@ -643,6 +681,30 @@ const Success = () => {
           transaction_id: transactionId,
         },
       });
+
+      // Save downsell order to database
+      const stored = localStorage.getItem(ORDER_DATA_KEY);
+      const orderData = stored ? JSON.parse(stored) : null;
+      if (orderData?.userInfo) {
+        try {
+          await createOrder({
+            ...orderData.userInfo,
+            quantity: quantity,
+            price: price / quantity,
+            totalAmount: price,
+            shippingCost: 0,
+            transactionId: transactionId,
+            paymentStatus: 'success',
+            orderSource: 'downsell',
+            isUpsell: false,
+            isDownsell: true,
+            originalOrderId: orderData.initialTransactionId,
+          });
+          console.log('✅ Downsell order saved successfully');
+        } catch (orderError) {
+          console.error('❌ Failed to save downsell order:', orderError);
+        }
+      }
 
       updateOrderData({
         completed: true,

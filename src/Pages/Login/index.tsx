@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, AlertCircle } from "lucide-react";
+import { loginAdmin } from "../../api/admin";
+import { useNavigate } from "react-router-dom";
 
 interface LoginPageProps {
   onLogin?: () => void;
@@ -9,16 +11,26 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
-    // Simulate login delay
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await loginAdmin({ email, password });
+    
       onLogin?.();
-    }, 1000);
+    
+      // Navigate to admin panel
+      navigate("/admin");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed. Please check your credentials.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -36,6 +48,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         {/* Form Section */}
         <div className="p-8">
           <form onSubmit={handleLogin} className="space-y-6">
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+            )}
+
             {/* Email Field */}
             <div className="space-y-2">
               <label className="block text-sm font-bold text-gray-700">
