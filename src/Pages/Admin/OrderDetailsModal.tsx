@@ -1,6 +1,6 @@
 import React, { Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { X, Package, User, CreditCard, MapPin, Calendar } from "lucide-react";
+import { X, Package, User, MapPin, Calendar } from "lucide-react";
 
 interface OrderData {
   id: string;

@@ -36,7 +36,7 @@ const StepFour: React.FC = () => {
   };
 
   const basePrice = Number(values.price) || 0;
-  const quantity = Number(values.quantity) || 0;
+  // const quantity = Number(values.quantity) || 0;
   const shipping = Number(values.shippingCost) || 0;
 
   // const warrantyUnitPrice = 4;
