@@ -8,6 +8,7 @@ import StepFour from "../components/StepFour";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { createCreditCardTransaction } from "../../../api/backend";
+import { createOrder } from "../../../api/orders";
 import { validationSchema } from "../../../utils/schema/validationSchema";
 import type { FormValues } from "../../../types";
 import { v4 as uuidv4 } from "uuid";
@@ -127,12 +128,53 @@ const MultiStepForm = () => {
         const orderId = uuidv4();
         const transactionId = result.stored_transaction_id || orderId;
 
+        // Save order to database
+        try {
+          await createOrder({
+            firstName: values.firstName,
+            lastName: values.lastName,
+            email: values.email,
+            phoneNumber: values.phoneNumber,
+            city: values.city,
+            streetAddress: values.streetAddress,
+            postalCode: values.postalCode,
+            country: values.country || 'Israel',
+            quantity: unitsNumber,
+            price: unitPrice,
+            totalAmount: unitPrice * unitsNumber,
+            shippingCost: Number(values.shippingCost) || 0,
+            transactionId: transactionId,
+            paymentStatus: 'success',
+            orderSource: 'main_checkout',
+            isUpsell: false,
+            isDownsell: false,
+            marketingEmails: values.marketingEmails,
+            marketingSMS: values.marketingSMS,
+          });
+          console.log('✅ Order saved successfully');
+        } catch (orderError) {
+          console.error('❌ Failed to save order:', orderError);
+          // Continue to success page even if order save fails
+        }
+
         navigate("/success", {
           state: {
             orderId,
             quantity: unitsNumber,
             price: unitPrice * unitsNumber,
             initialTransactionId: transactionId,
+            userInfo: {
+              firstName: values.firstName,
+              lastName: values.lastName,
+              email: values.email,
+              phoneNumber: values.phoneNumber,
+              city: values.city,
+              streetAddress: values.streetAddress,
+              postalCode: values.postalCode,
+              country: values.country || 'Israel',
+              marketingEmails: values.marketingEmails,
+              marketingSMS: values.marketingSMS,
+            },
           },
         });
         return;

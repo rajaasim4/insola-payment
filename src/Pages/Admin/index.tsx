@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Search,
   Download,
@@ -8,14 +8,14 @@ import {
   Users,
   TrendingUp,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import OrderDetailsModal from "./OrderDetailsModal";
+import { getOrders, getOrderStats } from "../../api/orders";
+import { verifyAdmin, logoutAdmin } from "../../api/admin";
 
-// Static Order Data Type - Extended with all MultiStepForm fields
+// Order Data Type from API
 interface OrderData {
-  id: string;
-  date: string;
-  selectedProductId: number;
-  size: string;
+  _id: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -24,107 +24,22 @@ interface OrderData {
   city: string;
   streetAddress: string;
   postalCode: string;
-  shippingMethod: string;
-  shippingCost: string;
-  price: string;
-  quantity: string;
-  warranty: boolean;
+  quantity: number;
+  price: number;
+  totalAmount: number;
+  shippingCost: number;
+  transactionId: string;
+  paymentStatus: "success" | "failed" | "pending";
+  orderSource: "main_checkout" | "upsell" | "downsell";
+  isUpsell: boolean;
+  isDownsell: boolean;
+  originalOrderId?: string;
   marketingEmails: boolean;
   marketingSMS: boolean;
-  status: "completed" | "pending" | "failed";
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Static Mock Data with all fields from MultiStepForm
-const STATIC_ORDERS: OrderData[] = [
-  {
-    id: "ORD-7782",
-    date: "2023-10-24",
-    selectedProductId: 4,
-    size: "S-M",
-    firstName: "ישראל",
-    lastName: "ישראלי",
-    email: "israel@example.com",
-    phoneNumber: "050-1234567",
-    country: "ישראל",
-    city: "תל אביב",
-    streetAddress: "הרצל 10",
-    postalCode: "6123456",
-    shippingMethod: "standard",
-    shippingCost: "15",
-    price: "299.00",
-    quantity: "4",
-    warranty: true,
-    marketingEmails: true,
-    marketingSMS: false,
-    status: "completed",
-  },
-  {
-    id: "ORD-7783",
-    date: "2023-10-25",
-    selectedProductId: 1,
-    size: "L-XL",
-    firstName: "שרה",
-    lastName: "כהן",
-    email: "sarah@example.com",
-    phoneNumber: "052-9876543",
-    country: "ישראל",
-    city: "ירושלים",
-    streetAddress: "יפו 22",
-    postalCode: "9412345",
-    shippingMethod: "express",
-    shippingCost: "25",
-    price: "99.00",
-    quantity: "1",
-    warranty: false,
-    marketingEmails: false,
-    marketingSMS: true,
-    status: "pending",
-  },
-  {
-    id: "ORD-7784",
-    date: "2023-10-25",
-    selectedProductId: 2,
-    size: "S-M",
-    firstName: "דוד",
-    lastName: "לוי",
-    email: "david@example.com",
-    phoneNumber: "054-5555555",
-    country: "ישראל",
-    city: "חיפה",
-    streetAddress: "הנביאים 5",
-    postalCode: "3312345",
-    shippingMethod: "standard",
-    shippingCost: "15",
-    price: "169.00",
-    quantity: "2",
-    warranty: true,
-    marketingEmails: true,
-    marketingSMS: true,
-    status: "completed",
-  },
-  {
-    id: "ORD-7785",
-    date: "2023-10-26",
-    selectedProductId: 3,
-    size: "L-XL",
-    firstName: "רחל",
-    lastName: "מזרחי",
-    email: "rachel@example.com",
-    phoneNumber: "053-1112233",
-    country: "ישראל",
-    city: "באר שבע",
-    streetAddress: "שדרות בן גוריון 15",
-    postalCode: "8412345",
-    shippingMethod: "standard",
-    shippingCost: "15",
-    price: "249.00",
-    quantity: "3",
-    warranty: false,
-    marketingEmails: false,
-    marketingSMS: false,
-    status: "failed",
-  },
-];
 
 interface AdminDashboardProps {
   onLogout?: () => void;
@@ -134,15 +49,82 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [orders, setOrders] = useState<OrderData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit] = useState(20);
+  const navigate = useNavigate();
+  
+  // Statistics state
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    monthlyIncome: 0,
+    newCustomers: 0,
+  });
 
-  // Filter logic on static data
-  const filteredOrders = STATIC_ORDERS.filter(
-    (order) =>
-      order.firstName.includes(searchTerm) ||
-      order.lastName.includes(searchTerm) ||
-      order.email.includes(searchTerm) ||
-      order.id.includes(searchTerm),
-  );
+  // Check authentication on mount
+  useEffect(() => {
+    checkAuth();
+    fetchStats();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      await verifyAdmin();
+    } catch (error) {
+      console.error('Authentication failed:', error);
+      navigate('/login');
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await getOrderStats();
+      setStats(response.stats);
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  };
+
+  // Fetch orders from API
+  useEffect(() => {
+    fetchOrders();
+  }, [currentPage, searchTerm]);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const skip = (currentPage - 1) * limit;
+      const response = await getOrders({
+        search: searchTerm || undefined,
+        limit,
+        skip,
+      });
+      setOrders(response.orders);
+      setTotal(response.total);
+    } catch (error) {
+      console.error('Failed to fetch orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalPages = Math.ceil(total / limit);
+  const hasNextPage = currentPage < totalPages;
+  const hasPrevPage = currentPage > 1;
+
+  const handleLogout = async () => {
+    try {
+      await logoutAdmin();
+      onLogout?.();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Still redirect even if logout fails
+      navigate('/login');
+    }
+  };
 
   const handleViewDetails = (order: OrderData) => {
     setSelectedOrder(order);
@@ -167,18 +149,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       "עיר",
       "כתובת",
       "מיקוד",
-      "מוצר",
-      "מידה",
       "כמות",
       "מחיר ליחידה",
+      "סכום כולל",
       "עלות משלוח",
-      "אחריות",
+      "מקור הזמנה",
       "סטטוס",
     ];
 
-    const rows = filteredOrders.map((order) => [
-      order.id,
-      order.date,
+    const rows = orders.map((order) => [
+      order.transactionId,
+      new Date(order.createdAt).toLocaleDateString('he-IL'),
       order.firstName,
       order.lastName,
       order.email,
@@ -187,13 +168,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       order.city,
       order.streetAddress,
       order.postalCode,
-      order.selectedProductId.toString(),
-      order.size,
-      order.quantity,
-      order.price,
-      order.shippingCost,
-      order.warranty ? "כן" : "לא",
-      order.status,
+      order.quantity.toString(),
+      order.price.toString(),
+      order.totalAmount.toString(),
+      order.shippingCost.toString(),
+      order.orderSource,
+      order.paymentStatus,
     ]);
 
     // Add BOM for Hebrew support in Excel
@@ -223,7 +203,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed":
+      case "success":
         return "bg-green-100 text-green-800 border-green-200";
       case "pending":
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
@@ -236,7 +216,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "completed":
+      case "success":
         return "הושלם";
       case "pending":
         return "ממתין";
@@ -244,6 +224,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         return "נכשל";
       default:
         return status;
+    }
+  };
+
+  const getOrderSourceText = (source: string) => {
+    switch (source) {
+      case "main_checkout":
+        return "רכישה ראשית";
+      case "upsell":
+        return "שדרוג";
+      case "downsell":
+        return "הנחה";
+      default:
+        return source;
     }
   };
 
@@ -264,7 +257,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                 מנהל מערכת
               </span>
               <button
-                onClick={onLogout}
+                onClick={handleLogout}
                 className="p-2 text-gray-500 cursor-pointer hover:text-[#C73126] transition-colors"
                 title="התנתקות"
               >
@@ -281,7 +274,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 mb-1">סה"כ הזמנות</p>
-              <h3 className="text-2xl font-bold text-gray-900">1,245</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {stats.totalOrders.toLocaleString('he-IL')}
+              </h3>
             </div>
             <div className="p-3 bg-blue-50 text-blue-600 rounded-full">
               <Package size={24} />
@@ -290,7 +285,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 mb-1">הכנסות החודש</p>
-              <h3 className="text-2xl font-bold text-gray-900">₪45,200</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                ₪{stats.monthlyIncome.toLocaleString('he-IL')}
+              </h3>
             </div>
             <div className="p-3 bg-green-50 text-green-600 rounded-full">
               <TrendingUp size={24} />
@@ -299,7 +296,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 mb-1">לקוחות חדשים</p>
-              <h3 className="text-2xl font-bold text-gray-900">85</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {stats.newCustomers.toLocaleString('he-IL')}
+              </h3>
             </div>
             <div className="p-3 bg-purple-50 text-purple-600 rounded-full">
               <Users size={24} />
@@ -363,56 +362,69 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredOrders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      #{order.id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-gray-900">
-                        {order.firstName} {order.lastName}
-                      </div>
-                      <div className="text-sm text-gray-500">{order.email}</div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        {order.phoneNumber}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        מוצר #{order.selectedProductId} ({order.quantity} יח')
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        מידה: {order.size}
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        {order.city}, {order.streetAddress}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
-                      ₪{order.price}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full border ${getStatusColor(order.status)}`}
-                      >
-                        {getStatusText(order.status)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      {/* Delete button removed, only View button remains */}
-                      <button
-                        onClick={() => handleViewDetails(order)}
-                        className="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-lg hover:bg-blue-100 transition-colors"
-                        title="צפה בפרטים"
-                      >
-                        <Eye size={18} />
-                      </button>
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                      טוען הזמנות...
                     </td>
                   </tr>
-                ))}
+                ) : orders.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                      לא נמצאו הזמנות
+                    </td>
+                  </tr>
+                ) : (
+                  orders.map((order) => (
+                    <tr
+                      key={order._id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        #{order.transactionId}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-bold text-gray-900">
+                          {order.firstName} {order.lastName}
+                        </div>
+                        <div className="text-sm text-gray-500">{order.email}</div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {order.phoneNumber}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {getOrderSourceText(order.orderSource)} ({order.quantity} יח')
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          סכום: ₪{order.totalAmount}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {order.city}, {order.streetAddress}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
+                        ₪{order.totalAmount}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full border ${getStatusColor(order.paymentStatus)}`}
+                        >
+                          {getStatusText(order.paymentStatus)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => handleViewDetails(order)}
+                          className="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-lg hover:bg-blue-100 transition-colors"
+                          title="צפה בפרטים"
+                        >
+                          <Eye size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -420,16 +432,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           {/* Pagination */}
           <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
             <span className="text-sm text-gray-500">
-              מציג 1-{filteredOrders.length} מתוך {STATIC_ORDERS.length} תוצאות
+              מציג {((currentPage - 1) * limit) + 1}-{Math.min(currentPage * limit, total)} מתוך {total} תוצאות
             </span>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <button
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50"
-                disabled
+                onClick={() => setCurrentPage(currentPage - 1)}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!hasPrevPage}
               >
                 הקודם
               </button>
-              <button className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+              <span className="text-sm text-gray-600">
+                עמוד {currentPage} מתוך {totalPages || 1}
+              </span>
+              <button
+                onClick={() => setCurrentPage(currentPage + 1)}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!hasNextPage}
+              >
                 הבא
               </button>
             </div>

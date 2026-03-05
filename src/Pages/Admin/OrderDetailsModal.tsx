@@ -3,10 +3,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { X, Package, User, MapPin, Calendar } from "lucide-react";
 
 interface OrderData {
-  id: string;
-  date: string;
-  selectedProductId: number;
-  size: string;
+  _id: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -15,14 +12,20 @@ interface OrderData {
   city: string;
   streetAddress: string;
   postalCode: string;
-  shippingMethod: string;
-  shippingCost: string;
-  price: string;
-  quantity: string;
-  warranty: boolean;
+  quantity: number;
+  price: number;
+  totalAmount: number;
+  shippingCost: number;
+  transactionId: string;
+  paymentStatus: "success" | "failed" | "pending";
+  orderSource: "main_checkout" | "upsell" | "downsell";
+  isUpsell: boolean;
+  isDownsell: boolean;
+  originalOrderId?: string;
   marketingEmails: boolean;
   marketingSMS: boolean;
-  status: "completed" | "pending" | "failed";
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface OrderDetailsModalProps {
@@ -40,7 +43,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed":
+      case "success":
         return "bg-green-100 text-green-800 border-green-200";
       case "pending":
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
@@ -53,7 +56,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "completed":
+      case "success":
         return "הושלם";
       case "pending":
         return "ממתין";
@@ -64,19 +67,18 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
     }
   };
 
-  const getProductName = (productId: number) => {
-    const products: Record<number, string> = {
-      1: "Insola - 1 זוג",
-      2: "Insola - 2 זוגות",
-      3: "Insola - 3 זוגות",
-      4: "Insola - 4 זוגות (הכי פופולארי)",
-    };
-    return products[productId] || `מוצר #${productId}`;
+  const getOrderSourceText = (source: string) => {
+    switch (source) {
+      case "main_checkout":
+        return "רכישה ראשית";
+      case "upsell":
+        return "שדרוג";
+      case "downsell":
+        return "הנחה";
+      default:
+        return source;
+    }
   };
-
-  const totalPrice = (
-    parseFloat(order.price) * parseInt(order.quantity)
-  ).toFixed(2);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -91,7 +93,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-50" />
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
         </Transition.Child>
 
         {/* Modal Panel */}
@@ -110,7 +112,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                 {/* Header */}
                 <div className="bg-blue-500 px-6 py-4 flex items-center justify-between">
                   <Dialog.Title className="text-lg font-bold text-white">
-                    פרטי הזמנה #{order.id}
+                    פרטי הזמנה #{order.transactionId}
                   </Dialog.Title>
                   <button
                     onClick={onClose}
@@ -127,13 +129,13 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                     <div className="flex items-center gap-2">
                       <Calendar className="h-5 w-5 text-gray-500" />
                       <span className="text-sm text-gray-600">
-                        תאריך: {order.date}
+                        תאריך: {new Date(order.createdAt).toLocaleDateString('he-IL')}
                       </span>
                     </div>
                     <span
-                      className={`px-4 py-2 rounded-full text-sm font-bold border ${getStatusColor(order.status)}`}
+                      className={`px-4 py-2 rounded-full text-sm font-bold border ${getStatusColor(order.paymentStatus)}`}
                     >
-                      {getStatusText(order.status)}
+                      {getStatusText(order.paymentStatus)}
                     </span>
                   </div>
 
@@ -206,11 +208,9 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                           </span>
                         </p>
                         <p>
-                          <span className="text-gray-500">שיטת משלוח:</span>{" "}
+                          <span className="text-gray-500">עלות משלוח:</span>{" "}
                           <span className="font-medium">
-                            {order.shippingMethod === "standard"
-                              ? "רגיל"
-                              : "מהיר"}
+                            ₪{order.shippingCost}
                           </span>
                         </p>
                       </div>
@@ -225,14 +225,10 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                       <div className="grid md:grid-cols-2 gap-4">
                         <div className="space-y-2 text-sm">
                           <p>
-                            <span className="text-gray-500">מוצר:</span>{" "}
+                            <span className="text-gray-500">מקור הזמנה:</span>{" "}
                             <span className="font-medium">
-                              {getProductName(order.selectedProductId)}
+                              {getOrderSourceText(order.orderSource)}
                             </span>
-                          </p>
-                          <p>
-                            <span className="text-gray-500">מידה:</span>{" "}
-                            <span className="font-medium">{order.size}</span>
                           </p>
                           <p>
                             <span className="text-gray-500">כמות:</span>{" "}
@@ -241,16 +237,24 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                             </span>
                           </p>
                           <p>
-                            <span className="text-gray-500">אחריות:</span>{" "}
-                            <span className="font-medium">
-                              {order.warranty ? "3 שנים (+₪4 ליחידה)" : "ללא"}
-                            </span>
+                            <span className="text-gray-500">מחיר ליחידה:</span>{" "}
+                            <span className="font-medium">₪{order.price}</span>
                           </p>
+                          {order.originalOrderId && (
+                            <p>
+                              <span className="text-gray-500">הזמנה מקורית:</span>{" "}
+                              <span className="font-medium text-xs">
+                                #{order.originalOrderId}
+                              </span>
+                            </p>
+                          )}
                         </div>
                         <div className="space-y-2 text-sm">
                           <p>
-                            <span className="text-gray-500">מחיר ליחידה:</span>{" "}
-                            <span className="font-medium">₪{order.price}</span>
+                            <span className="text-gray-500">סכום ביניים:</span>{" "}
+                            <span className="font-medium">
+                              ₪{order.price * order.quantity}
+                            </span>
                           </p>
                           <p>
                             <span className="text-gray-500">עלות משלוח:</span>{" "}
@@ -261,7 +265,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                           <p className="pt-2 border-t border-gray-200">
                             <span className="text-gray-500">סה"כ:</span>
                             <span className="font-bold text-lg text-green-600 mr-2">
-                              ₪{totalPrice}
+                              ₪{order.totalAmount}
                             </span>
                           </p>
                         </div>
