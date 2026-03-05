@@ -138,22 +138,22 @@ const MultiStepForm = () => {
             city: values.city,
             streetAddress: values.streetAddress,
             postalCode: values.postalCode,
-            country: values.country || 'Israel',
+            country: values.country || "Israel",
             quantity: unitsNumber,
             price: unitPrice,
             totalAmount: unitPrice * unitsNumber,
             shippingCost: Number(values.shippingCost) || 0,
             transactionId: transactionId,
-            paymentStatus: 'success',
-            orderSource: 'main_checkout',
+            paymentStatus: "success",
+            orderSource: "main_checkout",
             isUpsell: false,
             isDownsell: false,
             marketingEmails: values.marketingEmails,
             marketingSMS: values.marketingSMS,
           });
-          console.log('✅ Order saved successfully');
+          console.log("✅ Order saved successfully");
         } catch (orderError) {
-          console.error('❌ Failed to save order:', orderError);
+          console.error("❌ Failed to save order:", orderError);
           // Continue to success page even if order save fails
         }
 
@@ -171,7 +171,7 @@ const MultiStepForm = () => {
               city: values.city,
               streetAddress: values.streetAddress,
               postalCode: values.postalCode,
-              country: values.country || 'Israel',
+              country: values.country || "Israel",
               marketingEmails: values.marketingEmails,
               marketingSMS: values.marketingSMS,
             },
