@@ -9,6 +9,8 @@ import "react-toastify/dist/ReactToastify.css";
 import TagManager from "react-gtm-module";
 import { GTM_ID } from "./utils/constants";
 import ThankYou from "./Pages/ThankYou";
+import LoginPage from "./Pages/Login";
+import AdminDashboard from "./Pages/Admin";
 
 function App() {
   const tagManagerArgs = {
@@ -39,6 +41,8 @@ function App() {
           <Route path="/success" element={<Success />} />
           <Route path="/error" element={<PaymentError />} />
           <Route path="/thank-you" element={<ThankYou />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
       </div>
     </>
