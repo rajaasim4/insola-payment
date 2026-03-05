@@ -94,7 +94,7 @@ const StepOne: React.FC<StepProps> = ({
             <span className="text-[#C73126] font-bold">
               הצעה לזמן מוגבל בלבד:
             </span>
-            Insola זמין במחיר חסר תקדים ₪99.00 ₪330.00 (70% הנחה ליחידה)
+            Insola זמין במחיר חסר תקדים ₪99.00 במקום ₪330.00 (70% הנחה ליחידה)
           </p>
         </div>
       </div>

@@ -9,7 +9,7 @@ const Order = () => {
       {/* Header  */}
       <Header />
       {/* WhatsApp Button */}
-      <div className="fixed bottom-6 right-6">
+      <div className="fixed md:bottom-6 bottom-24 right-6">
         <a
           href="https://wa.me/972586895089"
           target="_blank"
