@@ -3,7 +3,7 @@ import { BsFillPatchCheckFill } from "react-icons/bs";
 const Header = () => {
   return (
     <div className="h-70 lg:pt-20 relative lg:pb-5 bg-[url('/images/bg.png')] w-full bg-cover bg-center">
-      <div className="absolute inset-0 bg-black/50 size-full"></div>
+      <div className="absolute inset-0 bg-white/30 size-full"></div>
       <div className="w-full   mx-auto max-w-5xl flex justify-between lg:flex-row flex-col relative">
         <div className="lg:w-1/2 max-lg:flex justify-center">
           <img src="/images/logo.png" className="max-w-40 " alt="" />

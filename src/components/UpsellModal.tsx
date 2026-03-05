@@ -703,7 +703,7 @@ export const UpsellModal = ({
                         🔥 הצעת בזק: מבצע בלעדי עד סוף הטיימר
                       </span>
                       <div className="text-sm font-bold text-gray-600 mb-2 mt-1">
-                        הוסף {option.addPairs}{" "}
+                        הוסף{" "}
                         {option.addPairs === 1
                           ? "זוג מדרסי Insola נוסף"
                           : option.addPairs + " זוגות מדרסי Insola נוספים"}
@@ -827,28 +827,36 @@ export const UpsellModal = ({
                   {/* Footer */}
                   <div className="bg-gray-100 border-t border-gray-200 py-2.5 px-5 flex items-center justify-center gap-3 flex-wrap text-[11px]">
                     <a
-                      href="#"
+                      target="_blank"
+                      rel="noopener norefferer"
+                      href="https://dailyhealthinsider.net/%d7%aa%d7%a0%d7%90%d7%99-%d7%a9%d7%99%d7%9e%d7%95%d7%a9/"
                       className="text-gray-400 no-underline hover:text-gray-600 hover:underline"
                     >
                       תנאי שימוש
                     </a>
                     <span className="text-gray-300 text-[10px]">|</span>
                     <a
-                      href="#"
+                      target="_blank"
+                      rel="noopener norefferer"
+                      href="https://insola.co/pages/%D7%9E%D7%93%D7%A0%D7%99%D7%95%D7%AA-%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA"
                       className="text-gray-400 no-underline hover:text-gray-600 hover:underline"
                     >
                       מדיניות פרטיות
                     </a>
                     <span className="text-gray-300 text-[10px]">|</span>
                     <a
-                      href="#"
+                      target="_blank"
+                      rel="noopener norefferer"
+                      href="https://dailyhealthinsider.net/%d7%9e%d7%93%d7%99%d7%a0%d7%99%d7%95%d7%aa-%d7%9e%d7%a9%d7%9c%d7%95%d7%97%d7%99%d7%9d/"
                       className="text-gray-400 no-underline hover:text-gray-600 hover:underline"
                     >
                       מדיניות משלוחים
                     </a>
                     <span className="text-gray-300 text-[10px]">|</span>
                     <a
-                      href="#"
+                      target="_blank"
+                      rel="noopener norefferer"
+                      href="https://dailyhealthinsider.net/%d7%9e%d7%93%d7%99%d7%a0%d7%99%d7%95%d7%aa-%d7%94%d7%97%d7%96%d7%a8%d7%95%d7%aa-%d7%95%d7%94%d7%97%d7%96%d7%a8%d7%99%d7%9d/"
                       className="text-gray-400 no-underline hover:text-gray-600 hover:underline"
                     >
                       מדיניות ביטולים/החזרות

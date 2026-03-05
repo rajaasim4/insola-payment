@@ -229,16 +229,16 @@ const ThankYou = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-3">
-          <button
+          {/* <button
             onClick={() => window.print()}
             className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl transition-colors text-sm"
           >
             🖨️ הדפסת קבלה
-          </button>
+          </button> */}
 
           <button
             onClick={() => navigate("/")}
-            className="w-full text-gray-500 hover:text-gray-700 text-sm underline py-2 transition-colors"
+            className="w-full text-gray-500 cursor-pointer hover:text-gray-700 text-sm underline py-2 transition-colors"
           >
             חזרה לדף הבית
           </button>
