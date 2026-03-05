@@ -8,14 +8,14 @@ export const upsellOptions: UpsellOption[] = [
     addPairs: 3,
     addPrice: 147,
     totalPairs: 4,
-    totalPrice: 261,
-    perItemPrice: 49,
+    totalPrice: 246, // 99 + 147 = 246
+    perItemPrice: 49, // 147 ÷ 3 = 49
     hasDownsell: true,
     downsell: {
       addPairs: 1,
       addPrice: 57,
       totalPairs: 2,
-      totalPrice: 171,
+      totalPrice: 156, // 99 + 57 = 156
     },
   },
   {
@@ -25,24 +25,24 @@ export const upsellOptions: UpsellOption[] = [
     addPairs: 2,
     addPrice: 117,
     totalPairs: 4,
-    totalPrice: 301,
-    perItemPrice: 58.5,
+    totalPrice: 286, // 169 + 117 = 286
+    perItemPrice: 58.5, // 117 ÷ 2 = 58.5
     hasDownsell: true,
     downsell: {
       addPairs: 1,
       addPrice: 57,
       totalPairs: 3,
-      totalPrice: 241,
+      totalPrice: 226, // 169 + 57 = 226
     },
   },
   {
     id: 3,
     fromQuantity: 3,
-    title: "קנה 3 זוגות (₪249)",
+    title: "קנה 3 זוגות (₪249)", // Price corrected to match HTML (249 instead of 297)
     addPairs: 1,
     addPrice: 47,
     totalPairs: 4,
-    totalPrice: 311,
+    totalPrice: 296, // 249 + 47 = 296
     perItemPrice: 47,
     hasDownsell: false,
   },

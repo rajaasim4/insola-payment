@@ -16,3 +16,19 @@
 * {
   font-family: "Montserrat", sans-serif;
 }
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-\[shine_2\.5s_ease-in-out_infinite\] {
+  animation: shine 2.5s ease-in-out infinite;
+}
