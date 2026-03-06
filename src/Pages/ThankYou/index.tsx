@@ -185,10 +185,10 @@ const ThankYou = () => {
             {/* Shipping */}
             <div className="flex justify-between items-center py-2 text-sm text-gray-600 border-b border-gray-200">
               <span className="font-medium">משלוח עד הבית</span>
-              {orderSummary.shipping === 0 ? (
+              {orderSummary.upgradeType ? (
                 <span className="text-green-600 font-bold">חינם!</span>
               ) : (
-                <span>{formatPrice(orderSummary.shipping)}</span>
+                <span className="text-gray-500">כלול במחיר</span>
               )}
             </div>
 
@@ -197,7 +197,7 @@ const ThankYou = () => {
               <span className="text-gray-800">סה"כ לתשלום</span>
               <span className="text-green-700 text-lg">
                 {formatPrice(
-                  orderSummary.totalPrice + (orderSummary.shipping || 0),
+                  orderSummary.originalPrice + (orderSummary.upgradedPrice || 0),
                 )}
               </span>
             </div>

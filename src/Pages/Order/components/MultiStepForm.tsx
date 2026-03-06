@@ -44,7 +44,6 @@ const MultiStepForm = () => {
   const initialValues: FormValues = {
     selectedProductId: formData.selectedProductId || 4,
     size: formData.size || "S-M",
-    // warranty: formData.warranty || false,
     firstName: formData.firstName || "",
     lastName: formData.lastName || "",
     email: formData.email || "",
@@ -62,7 +61,6 @@ const MultiStepForm = () => {
     cardNumber: formData.cardNumber || "",
     cvv: formData.cvv || "",
     expiryDate: formData.expiryDate || "",
-    // termsAccepted: formData.termsAccepted || false,
   };
 
   const handleSubmit = async (
@@ -81,6 +79,8 @@ const MultiStepForm = () => {
 
       const unitPrice = Number(values.price);
       const unitsNumber = Number(values.quantity);
+      const shippingCost = Number(values.shippingCost) || 0;
+      const totalWithShipping = unitPrice + shippingCost;
 
       const client: Record<string, string> = {};
       const fullName = `${values.firstName} ${values.lastName}`.trim();
@@ -101,8 +101,8 @@ const MultiStepForm = () => {
           {
             name: "Insola Order",
             type: "I",
-            unit_price: unitPrice,
-            units_number: unitsNumber,
+            unit_price: totalWithShipping,
+            units_number: 1,
           },
         ],
         client: Object.keys(client).length ? (client as any) : undefined,
@@ -122,13 +122,11 @@ const MultiStepForm = () => {
       // return;
 
       if (result.tranzila.error_code === 0) {
-        // Clear sensitive data immediately after successful payment
         clearSensitive();
 
         const orderId = uuidv4();
         const transactionId = result.stored_transaction_id || orderId;
 
-        // Save order to database
         try {
           await createOrder({
             firstName: values.firstName,
@@ -141,8 +139,8 @@ const MultiStepForm = () => {
             country: values.country || "Israel",
             quantity: unitsNumber,
             price: unitPrice,
-            totalAmount: unitPrice * unitsNumber,
-            shippingCost: Number(values.shippingCost) || 0,
+            totalAmount: totalWithShipping,
+            shippingCost: shippingCost,
             transactionId: transactionId,
             paymentStatus: "success",
             orderSource: "main_checkout",
@@ -151,17 +149,15 @@ const MultiStepForm = () => {
             marketingEmails: values.marketingEmails,
             marketingSMS: values.marketingSMS,
           });
-          console.log("✅ Order saved successfully");
         } catch (orderError) {
-          console.error("❌ Failed to save order:", orderError);
-          // Continue to success page even if order save fails
+          console.error('Failed to save order:', orderError);
         }
 
         navigate("/success", {
           state: {
             orderId,
             quantity: unitsNumber,
-            price: unitPrice * unitsNumber,
+            price: totalWithShipping,
             initialTransactionId: transactionId,
             userInfo: {
               firstName: values.firstName,
