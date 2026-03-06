@@ -18,7 +18,7 @@ function formatExpiry(input: string) {
 
 const StepFour: React.FC = () => {
   const {
-    submitForm,
+    // submitForm,
     values,
     isSubmitting,
     // handleChange,
@@ -29,11 +29,11 @@ const StepFour: React.FC = () => {
   }: FormikContextType<FormValues> = useFormikContext<FormValues>();
   const [, setFormData] = useAtom(orderFormAtom);
 
-  const handleSubmit = async (): Promise<void> => {
-    if (isSubmitting) return;
-    setFormData(values);
-    await submitForm();
-  };
+  // const handleSubmit = async (): Promise<void> => {
+  //   // if (isSubmitting) return;
+  //   setFormData(values);
+  //   await submitForm();
+  // };
 
   const basePrice = Number(values.price) || 0;
   // const quantity = Number(values.quantity) || 0;
@@ -174,8 +174,8 @@ const StepFour: React.FC = () => {
       </div> */}
       {/* Submit Button */}
       <button
-        type="button"
-        onClick={handleSubmit}
+        type="submit"
+        onClick={() => setFormData(values)}
         disabled={isSubmitting}
         className={`w-full bg-[#5cb85c] hover:bg-[#4cae4c] text-white font-bold py-3 px-6 rounded transition-colors disabled:bg-gray-400  ${isSubmitting ? "cursor-not-allowed" : "cursor-pointer"}`}
       >

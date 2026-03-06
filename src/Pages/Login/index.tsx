@@ -21,13 +21,17 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
     try {
       await loginAdmin({ email, password });
-    
+
       onLogin?.();
-    
+
       // Navigate to admin panel
       navigate("/admin");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed. Please check your credentials.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Login failed. Please check your credentials.",
+      );
     } finally {
       setIsLoading(false);
     }
