@@ -471,7 +471,22 @@ const Success = () => {
         if (!option || option.id === 4) {
           newOrderData.completed = true;
           localStorage.setItem(ORDER_DATA_KEY, JSON.stringify(newOrderData));
-          navigate("/thank-you", { replace: true });
+          
+          navigate("/thank-you", { 
+            replace: true,
+            state: {
+              transactionId: freshTransactionId,
+              orderData: {
+                originalQuantity: freshQuantity,
+                originalPrice: freshPrice,
+                totalQuantity: freshQuantity,
+                totalPrice: freshPrice,
+                shipping: 15,
+                transactionId: freshTransactionId,
+                upgradeType: null
+              }
+            }
+          });
           return;
         }
 
@@ -619,7 +634,26 @@ const Success = () => {
       toast.success("השידרוג בוצע בהצלחה!");
 
       setTimeout(() => {
-        navigate("/thank-you", { state: { transactionId } });
+        const stored = localStorage.getItem(ORDER_DATA_KEY);
+        const orderData = stored ? JSON.parse(stored) : null;
+        const option = upsellOptions.find((o) => o.fromQuantity === orderData?.quantity);
+        
+        navigate("/thank-you", { 
+          state: { 
+            transactionId,
+            orderData: option ? {
+              originalQuantity: orderData.quantity,
+              originalPrice: orderData.price,
+              upgradedQuantity: option.addPairs,
+              upgradedPrice: option.addPrice,
+              totalQuantity: option.totalPairs,
+              totalPrice: option.totalPrice,
+              shipping: 0,
+              transactionId,
+              upgradeType: "upsell"
+            } : null
+          } 
+        });
         clearOrderData();
       }, 1000);
     } catch (error) {
@@ -642,8 +676,22 @@ const Success = () => {
         const stored = localStorage.getItem(ORDER_DATA_KEY);
         const orderData = stored ? JSON.parse(stored) : null;
         const transactionId = orderData?.initialTransactionId;
+        
+        navigate("/thank-you", { 
+          state: { 
+            transactionId,
+            orderData: {
+              originalQuantity: orderData.quantity,
+              originalPrice: orderData.price,
+              totalQuantity: orderData.quantity,
+              totalPrice: orderData.price,
+              shipping: 15,
+              transactionId,
+              upgradeType: null
+            }
+          } 
+        });
         clearOrderData();
-        navigate("/thank-you", { state: { transactionId } });
       }, 500);
     }
   };
@@ -663,7 +711,21 @@ const Success = () => {
       const stored = localStorage.getItem(ORDER_DATA_KEY);
       const orderData = stored ? JSON.parse(stored) : null;
       const transactionId = orderData?.initialTransactionId;
-      navigate("/thank-you", { state: { transactionId } });
+      
+      navigate("/thank-you", { 
+        state: { 
+          transactionId,
+          orderData: {
+            originalQuantity: orderData.quantity,
+            originalPrice: orderData.price,
+            totalQuantity: orderData.quantity,
+            totalPrice: orderData.price,
+            shipping: 15,
+            transactionId,
+            upgradeType: null
+          }
+        } 
+      });
     }
   };
 
@@ -713,7 +775,26 @@ const Success = () => {
       toast.success("השידרוג בוצע בהצלחה!");
 
       setTimeout(() => {
-        navigate("/thank-you", { state: { transactionId } });
+        const stored = localStorage.getItem(ORDER_DATA_KEY);
+        const orderData = stored ? JSON.parse(stored) : null;
+        const option = upsellOptions.find((o) => o.fromQuantity === orderData?.quantity);
+        
+        navigate("/thank-you", { 
+          state: { 
+            transactionId,
+            orderData: option?.downsell ? {
+              originalQuantity: orderData.quantity,
+              originalPrice: orderData.price,
+              upgradedQuantity: option.downsell.addPairs,
+              upgradedPrice: option.downsell.addPrice,
+              totalQuantity: option.downsell.totalPairs,
+              totalPrice: option.downsell.totalPrice,
+              shipping: 15,
+              transactionId,
+              upgradeType: "downsell"
+            } : null
+          } 
+        });
         clearOrderData();
       }, 1000);
     } catch (error) {
@@ -729,8 +810,22 @@ const Success = () => {
       const stored = localStorage.getItem(ORDER_DATA_KEY);
       const orderData = stored ? JSON.parse(stored) : null;
       const transactionId = orderData?.initialTransactionId;
+      
+      navigate("/thank-you", { 
+        state: { 
+          transactionId,
+          orderData: {
+            originalQuantity: orderData.quantity,
+            originalPrice: orderData.price,
+            totalQuantity: orderData.quantity,
+            totalPrice: orderData.price,
+            shipping: 15,
+            transactionId,
+            upgradeType: null
+          }
+        } 
+      });
       clearOrderData();
-      navigate("/thank-you", { state: { transactionId } });
     }, 500);
   };
 

@@ -85,7 +85,7 @@
 //                 {/* Success Message */}
 //                 <div className="mb-6 text-center">
 //                   <p className="text-green-600 font-bold text-lg mb-2">
-//                     תודה! ההזמנה שלך בוצעה בהצלחה ✅
+//                     תודה! ההזמנה שלך בוצעה בהצלחה 
 //                   </p>
 //                 </div>
 
@@ -410,7 +410,7 @@ export const DownsellModal = ({
 
       if (result.tranzila.error_code === 0) {
         setShowCvvModal(false);
-        onAccept(totalPairs, totalPrice, result.stored_transaction_id);
+        onAccept(addPairs, addPrice, result.stored_transaction_id);
       } else {
         toast.error(result.tranzila.message || "התשלום נכשל");
       }

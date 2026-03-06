@@ -6,16 +6,16 @@ export const upsellOptions: UpsellOption[] = [
     fromQuantity: 1,
     title: "קנה זוג אחד (₪99)",
     addPairs: 3,
-    addPrice: 147,
+    addPrice: 200, 
     totalPairs: 4,
-    totalPrice: 246, // 99 + 147 = 246
-    perItemPrice: 49, // 147 ÷ 3 = 49
+    totalPrice: 299, 
+    perItemPrice: 50, 
     hasDownsell: true,
     downsell: {
       addPairs: 1,
-      addPrice: 57,
+      addPrice: 70,  
       totalPairs: 2,
-      totalPrice: 156, // 99 + 57 = 156
+      totalPrice: 169,
     },
   },
   {
@@ -23,38 +23,38 @@ export const upsellOptions: UpsellOption[] = [
     fromQuantity: 2,
     title: "קנה 2 זוגות (₪169)",
     addPairs: 2,
-    addPrice: 117,
+    addPrice: 130,
     totalPairs: 4,
-    totalPrice: 286, // 169 + 117 = 286
-    perItemPrice: 58.5, // 117 ÷ 2 = 58.5
+    totalPrice: 299, 
+    perItemPrice: 65, 
     hasDownsell: true,
     downsell: {
       addPairs: 1,
-      addPrice: 57,
+      addPrice: 80, 
       totalPairs: 3,
-      totalPrice: 226, // 169 + 57 = 226
+      totalPrice: 249, 
     },
   },
   {
     id: 3,
     fromQuantity: 3,
-    title: "קנה 3 זוגות (₪249)", // Price corrected to match HTML (249 instead of 297)
+    title: "קנה 3 זוגות (₪249)",
     addPairs: 1,
-    addPrice: 47,
+    addPrice: 50, 
     totalPairs: 4,
-    totalPrice: 296, // 249 + 47 = 296
-    perItemPrice: 47,
+    totalPrice: 299, 
+    perItemPrice: 50,
     hasDownsell: false,
   },
   {
     id: 4,
     fromQuantity: 4,
-    title: "קנה 4 זוגות",
+    title: "קנה 4 זוגות (₪299)",
     addPairs: 0,
     addPrice: 0,
     totalPairs: 4,
-    totalPrice: 0,
-    perItemPrice: 0,
+    totalPrice: 299,
+    perItemPrice: 74.75, 
     hasDownsell: false,
   },
 ];

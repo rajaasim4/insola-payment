@@ -207,7 +207,7 @@
 
 //                 <div className="mb-6 text-center">
 //                   <p className="text-green-600 font-bold text-lg mb-2">
-//                     תודה! ההזמנה שלך בוצעה בהצלחה ✅
+//                     תודה! ההזמנה שלך בוצעה בהצלחה 
 //                   </p>
 //                   <p className="text-gray-600">רק לפני שנסיים…</p>
 //                 </div>
@@ -423,18 +423,18 @@ export const UpsellModal = ({
     }
 
     const remaining = getRemainingTime();
-    if (remaining <= 0) {
+    if (remaining <= 0 && !showCvvModal) {
       onExpire();
       return;
     }
 
-    setTimeLeft(remaining);
+    setTimeLeft(Math.max(0, remaining));
 
     const closeTimer = setTimeout(() => setShowClose(true), 7000);
     const interval = setInterval(() => {
       const current = getRemainingTime();
-      setTimeLeft(current);
-      if (current <= 0) {
+      setTimeLeft(Math.max(0, current));
+      if (current <= 0 && !showCvvModal) {
         clearInterval(interval);
         onExpire();
       }
@@ -444,7 +444,7 @@ export const UpsellModal = ({
       clearTimeout(closeTimer);
       clearInterval(interval);
     };
-  }, [isOpen, orderId, onExpire, getTimerKey, getRemainingTime]);
+  }, [isOpen, orderId, onExpire, getTimerKey, getRemainingTime, showCvvModal]);
 
   // Testimonials rotation
   useEffect(() => {
@@ -568,8 +568,8 @@ export const UpsellModal = ({
         localStorage.removeItem(getTimerKey());
         setShowCvvModal(false);
         onAccept(
-          option.totalPairs,
-          option.totalPrice,
+          option.addPairs,
+          option.addPrice,
           result.stored_transaction_id,
         );
       } else {
@@ -687,7 +687,7 @@ export const UpsellModal = ({
                       <img
                         src="/images/insola-product.png"
                         alt="מדרסי Insola"
-                        className="max-w-[180px] w-full mx-auto rounded-xl"
+                        className="max-w-45 w-full mx-auto rounded-xl"
                       />
                     </div>
 
