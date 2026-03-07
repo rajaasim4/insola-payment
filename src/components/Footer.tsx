@@ -38,6 +38,8 @@ const Footer = () => {
                 key={index}
                 href={link.path}
                 dir="rtl"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="font-bold text-white duration-300 hover:text-white/80"
               >
                 {link.label}
