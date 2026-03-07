@@ -111,6 +111,11 @@ const ThankYou = () => {
     };
   }, [transactionId, navigate, orderData]);
 
+
+  useEffect(() => {
+    localStorage.removeItem('orderForm')
+  },[])
+
   const formatPrice = (price: number) => `₪${price.toFixed(0)}`;
 
   return (
