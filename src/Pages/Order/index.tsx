@@ -9,7 +9,7 @@ const Order = () => {
       {/* Header  */}
       <Header />
       {/* WhatsApp Button */}
-      <div className="fixed md:bottom-6 bottom-24 right-6">
+      <div className="fixed md:bottom-6 bottom-28 right-6">
         <a
           href="https://wa.me/972586895089"
           target="_blank"
@@ -17,7 +17,7 @@ const Order = () => {
         >
           <img
             src="/images/whatsapp.svg"
-            className="md:size-14 size-10 animate-pulse"
+            className="md:size-14 size-12 animate-pulse"
             alt=""
           />
         </a>
