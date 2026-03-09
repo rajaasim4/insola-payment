@@ -1,6 +1,7 @@
 import { FaCalendarCheck } from "react-icons/fa";
 import type { StepProps } from "../../../types";
 import TagManager from "react-gtm-module";
+import { useEffect } from "react";
 
 const StepOne: React.FC<StepProps> = ({
   values,
@@ -55,6 +56,14 @@ const StepOne: React.FC<StepProps> = ({
       img: "/images/1.png",
     },
   ];
+
+  useEffect(() => {
+    TagManager.dataLayer({
+      dataLayer: {
+        event: "item_added_to_cart",
+      },
+    });
+  });
 
   // Inside your component
   const handleSelectProduct = (item: any) => {
