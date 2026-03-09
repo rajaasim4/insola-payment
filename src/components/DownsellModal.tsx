@@ -317,8 +317,10 @@ export const DownsellModal = ({
                     {/* Testimonial */}
                     <div className="bg-gray-100 border-r-4 border-green-500 rounded-lg p-3 mb-4 text-xs text-gray-700 leading-relaxed transition-opacity duration-400">
                       <div className="text-amber-400 text-sm mb-1">★★★★★</div>
-                      <span>"{testimonials[testimonialIndex].text}"</span>
-                      <div className="font-bold text-green-600 mt-1 text-xs">
+                      <span className=" duration-500">
+                        "{testimonials[testimonialIndex].text}"
+                      </span>
+                      <div className="font-bold text-green-600 mt-1 text-xs duration-500">
                         {testimonials[testimonialIndex].author} ✓ רכישה מאומתת
                       </div>
                     </div>

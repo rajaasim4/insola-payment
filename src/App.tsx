@@ -11,6 +11,7 @@ import { GTM_ID } from "./utils/constants";
 import ThankYou from "./Pages/ThankYou";
 import LoginPage from "./Pages/Login";
 import AdminDashboard from "./Pages/Admin";
+import { useEffect } from "react";
 
 function App() {
   const tagManagerArgs = {
@@ -18,6 +19,14 @@ function App() {
   };
 
   TagManager.initialize(tagManagerArgs);
+
+  useEffect(() => {
+    TagManager.dataLayer({
+      dataLayer: {
+        event: "payment_page_event_add_to_cart",
+      },
+    });
+  }, []);
   return (
     <>
       <div dir="rtl" lang="he" className="min-h-screen bg-white font-sans">

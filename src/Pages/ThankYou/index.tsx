@@ -111,12 +111,13 @@ const ThankYou = () => {
     };
   }, [transactionId, navigate, orderData]);
 
-
   useEffect(() => {
-    localStorage.removeItem('orderForm')
-  },[])
+    localStorage.removeItem("orderForm");
+  }, []);
 
   const formatPrice = (price: number) => `₪${price.toFixed(0)}`;
+
+  console.log(orderSummary);
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -156,11 +157,20 @@ const ThankYou = () => {
             <div className="flex justify-between items-center py-2 text-sm text-gray-600 border-b border-gray-200">
               <span className="font-medium">
                 {orderSummary.originalQuantity}{" "}
-                {orderSummary.originalQuantity === 1 ? "זוג" : "זוגות"} מדרסי
+                {orderSummary.originalQuantity === 1 ? "זוג" : "זוגות"}
                 Insola
+                <span className="text-red-500">( מדרסי)</span>
               </span>
-              <span>{formatPrice(orderSummary.originalPrice)}</span>
+              <span>{formatPrice(orderSummary.originalPrice - 15)}</span>
             </div>
+
+            {/* Shipping */}
+            {/* {orderSummary.shipping !== 0 && ( */}
+            <div className="flex justify-between items-center py-2 text-sm text-gray-600 border-b border-gray-200">
+              <span className="font-medium">משלוח</span>
+              <span>₪15</span>
+            </div>
+            {/* )} */}
 
             {/* Upgrade Section (if applicable) */}
             {orderSummary.upgradeType && (
@@ -191,7 +201,13 @@ const ThankYou = () => {
             <div className="flex justify-between items-center py-2 text-sm text-gray-600 border-b border-gray-200">
               <span className="font-medium">משלוח עד הבית</span>
               {orderSummary.upgradeType ? (
-                <span className="text-green-600 font-bold">חינם!</span>
+                <span className="text-green-600 font-bold flex items-center gap-5">
+                  <div className=" text-xs line-through">
+                    <span className="font-medium">משלוח</span>
+                    <span>15</span>
+                  </div>
+                  חינם!
+                </span>
               ) : (
                 <span className="text-gray-500">כלול במחיר</span>
               )}
@@ -200,9 +216,10 @@ const ThankYou = () => {
             {/* Total */}
             <div className="flex justify-between items-center pt-3 mt-1 text-base font-bold">
               <span className="text-gray-800">סה"כ לתשלום</span>
-              <span className="text-green-700 text-lg">
+              <span className="text-green-700 text-lg flex items-center">
                 {formatPrice(
-                  orderSummary.originalPrice + (orderSummary.upgradedPrice || 0),
+                  orderSummary.originalPrice +
+                    (orderSummary.upgradedPrice || 0),
                 )}
               </span>
             </div>

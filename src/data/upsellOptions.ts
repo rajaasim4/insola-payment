@@ -6,7 +6,7 @@ export const upsellOptions: UpsellOption[] = [
     fromQuantity: 1,
     title: "קנה זוג אחד (₪99)",
     addPairs: 3,
-    addPrice: 147,
+    addPrice: 162,
     totalPairs: 4,
     totalPrice: 299,
     perItemPrice: 49,
