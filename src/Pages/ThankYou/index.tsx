@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { upsellOptions } from "../../data/upsellOptions";
+import { sendOrderToZapier } from "../../utils/helper";
 
 interface OrderSummary {
   originalQuantity: number;
@@ -11,7 +12,7 @@ interface OrderSummary {
   totalPrice: number;
   shipping: number;
   transactionId: string;
-  upgradeType?: "upsell" | "downsell" | null;
+  upgradeType?: "upsell" | "downsell" | "none";
 }
 
 const ThankYou = () => {
@@ -88,7 +89,7 @@ const ThankYou = () => {
               totalPrice: parsed.price,
               shipping: 15,
               transactionId,
-              upgradeType: null,
+              upgradeType: "none",
             });
           }
         }
@@ -111,13 +112,66 @@ const ThankYou = () => {
     };
   }, [transactionId, navigate, orderData]);
 
-  useEffect(() => {
-    localStorage.removeItem("orderForm");
-  }, []);
-
-  const formatPrice = (price: number) => `₪${price.toFixed(0)}`;
+  // useEffect(() => {
+  //   localStorage.removeItem("orderForm");
+  // }, []);
 
   console.log(orderSummary);
+  console.log(JSON.stringify(localStorage.getItem("orderForm")));
+
+  useEffect(() => {
+    if (!orderSummary) return;
+
+    try {
+      const storedForm = localStorage.getItem("orderForm");
+      const formData = storedForm ? JSON.parse(storedForm) : null;
+
+      const payload = {
+        transactionId: orderSummary.transactionId,
+
+        // Customer
+        firstName: formData?.firstName || "",
+        lastName: formData?.lastName || "",
+        email: formData?.email || "",
+        phoneNumber: formData?.phoneNumber || "",
+        city: formData?.city || "",
+        streetAddress: formData?.streetAddress || "",
+        postalCode: formData?.postalCode || "",
+        country: formData?.country || "",
+
+        // Quantities
+        originalQuantity: orderSummary.originalQuantity,
+        upgradedQuantity: orderSummary.upgradedQuantity || 0,
+        totalQuantity: orderSummary.totalQuantity,
+
+        // Prices
+        originalPrice: orderSummary.originalPrice,
+        upgradedPrice: orderSummary.upgradedPrice || 0,
+        shippingPrice: formData?.shippingCost || 15,
+        totalPrice:
+          orderSummary.originalPrice + orderSummary?.upgradedPrice! ||
+          orderSummary.totalPrice,
+
+        // Funnel
+        upgradeType: orderSummary.upgradeType ?? "none",
+
+        // Marketing
+        marketingEmails: formData?.marketingEmails ?? false,
+        marketingSMS: formData?.marketingSMS ?? false,
+      };
+
+      console.log("Data sent to zapier", payload);
+
+      sendOrderToZapier(payload);
+
+      // ✅ Clear order form AFTER sending
+      localStorage.removeItem("orderForm");
+    } catch (error) {
+      console.error("Failed to send order to Zapier:", error);
+    }
+  }, [orderSummary]);
+
+  const formatPrice = (price: number) => `₪${price.toFixed(0)}`;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">

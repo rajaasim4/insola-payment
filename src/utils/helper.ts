@@ -1,8 +1,9 @@
 import { WEBHOOK_URL } from "./constants";
 
 export interface ZapierPayload {
-  orderId: string;
   transactionId: string;
+
+  // Customer
   firstName: string;
   lastName: string;
   email: string;
@@ -11,10 +12,22 @@ export interface ZapierPayload {
   streetAddress: string;
   postalCode: string;
   country: string;
-  quantity: number;
-  price: number;
-  shippingCost: number;
-  totalAmount: number;
+
+  // Quantities
+  originalQuantity: number;
+  upgradedQuantity: number;
+  totalQuantity: number;
+
+  // Prices
+  originalPrice: number;
+  upgradedPrice: number;
+  shippingPrice: number;
+  totalPrice: number;
+
+  // Funnel info
+  upgradeType?: "upsell" | "downsell" | "none";
+
+  // Marketing
   marketingEmails: boolean;
   marketingSMS: boolean;
 }
@@ -25,7 +38,9 @@ export const sendOrderToZapier = async (data: ZapierPayload) => {
   try {
     await fetch(WEBHOOK_URL, {
       method: "POST",
-      // headers: { "Content-Type": "application/json" },
+      // headers: {
+      //   "Content-Type": "application/json",
+      // },
       body: JSON.stringify(data),
     });
   } catch (error) {

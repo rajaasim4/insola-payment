@@ -54,4 +54,4 @@ export const COUNTRIES = [
 export const GTM_ID = "GTM-KMZ4JRVD";
 
 export const WEBHOOK_URL =
-  "https://hooks.zapier.com/hooks/catch/12961765/uxt7tm2/";
+  "https://hooks.zapier.com/hooks/catch/12961765/ux9i5il/";
