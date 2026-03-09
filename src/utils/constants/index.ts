@@ -51,4 +51,6 @@ export const COUNTRIES = [
   { code: "TH", name: "תאילנד" },
 ];
 
-export const GTM_ID = "";
+export const GTM_ID = "GTM-KMZ4JRVD";
+
+export const Zapier_Hook = "";

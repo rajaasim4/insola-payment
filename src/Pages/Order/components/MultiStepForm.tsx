@@ -13,6 +13,7 @@ import { validationSchema } from "../../../utils/schema/validationSchema";
 import type { FormValues } from "../../../types";
 import { v4 as uuidv4 } from "uuid";
 import TagManager from "react-gtm-module";
+import { sendOrderToZapier } from "../../../utils/helper";
 
 function parseExpiryDate(expiryDate: string) {
   const cleaned = String(expiryDate).replace(/\s+/g, "");
@@ -147,6 +148,25 @@ const MultiStepForm = () => {
             orderSource: "main_checkout",
             isUpsell: false,
             isDownsell: false,
+            marketingEmails: values.marketingEmails,
+            marketingSMS: values.marketingSMS,
+          });
+
+          await sendOrderToZapier({
+            orderId,
+            transactionId,
+            firstName: values.firstName,
+            lastName: values.lastName,
+            email: values.email,
+            phoneNumber: values.phoneNumber,
+            city: values.city,
+            streetAddress: values.streetAddress,
+            postalCode: values.postalCode,
+            country: values.country || "Israel",
+            quantity: unitsNumber,
+            price: unitPrice,
+            shippingCost: shippingCost,
+            totalAmount: totalWithShipping,
             marketingEmails: values.marketingEmails,
             marketingSMS: values.marketingSMS,
           });
