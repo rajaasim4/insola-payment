@@ -1,4 +1,4 @@
-import { Zapier_Hook } from "./constants";
+import { WEBHOOK_URL } from "./constants";
 
 export interface ZapierPayload {
   orderId: string;
@@ -20,12 +20,12 @@ export interface ZapierPayload {
 }
 
 export const sendOrderToZapier = async (data: ZapierPayload) => {
-  if (!Zapier_Hook) return;
+  if (!WEBHOOK_URL) return;
 
   try {
-    await fetch(Zapier_Hook, {
+    await fetch(WEBHOOK_URL, {
       method: "POST",
-
+      // headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
   } catch (error) {
