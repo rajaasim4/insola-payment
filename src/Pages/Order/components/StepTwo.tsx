@@ -1,5 +1,6 @@
 import { FaUserLarge } from "react-icons/fa6";
 import type { StepProps } from "../../../types";
+import TagManager from "react-gtm-module";
 
 // function formatPhoneNumber(input: string): string {
 //   // Remove all non-digit characters
@@ -16,6 +17,17 @@ const StepTwo: React.FC<StepProps> = ({
   touched,
   // setFieldValue,
 }) => {
+  const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleChange(e);
+
+    if (e.target.value.length === 1) {
+      TagManager.dataLayer({
+        dataLayer: {
+          event: "initial_checkout",
+        },
+      });
+    }
+  };
   return (
     <div>
       <div className="flex items-center gap-0.5 mb-4">
@@ -35,7 +47,7 @@ const StepTwo: React.FC<StepProps> = ({
               className="border rounded-md py-2 pr-3 border-gray-300"
               placeholder="שם פרטי"
               value={values.firstName}
-              onChange={handleChange}
+              onChange={handleFirstNameChange}
               onBlur={handleBlur}
             />
             {touched.firstName && errors.firstName && (

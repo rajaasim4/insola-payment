@@ -12,6 +12,7 @@ import { createOrder } from "../../../api/orders";
 import { validationSchema } from "../../../utils/schema/validationSchema";
 import type { FormValues } from "../../../types";
 import { v4 as uuidv4 } from "uuid";
+import TagManager from "react-gtm-module";
 
 function parseExpiryDate(expiryDate: string) {
   const cleaned = String(expiryDate).replace(/\s+/g, "");
@@ -150,8 +151,14 @@ const MultiStepForm = () => {
             marketingSMS: values.marketingSMS,
           });
         } catch (orderError) {
-          console.error('Failed to save order:', orderError);
+          console.error("Failed to save order:", orderError);
         }
+
+        TagManager.dataLayer({
+          dataLayer: {
+            event: "payment_success",
+          },
+        });
 
         navigate("/success", {
           state: {
@@ -181,6 +188,11 @@ const MultiStepForm = () => {
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Payment failed";
       toast.error(msg);
+      TagManager.dataLayer({
+        dataLayer: {
+          event: "payment_error",
+        },
+      });
       navigate("/error");
     } finally {
       setSubmitting(false);
