@@ -34,13 +34,7 @@ export const validationSchema = Yup.object({
   phoneNumber: Yup.string()
     .required("נא להזין מספר טלפון")
     .matches(/^05\d{8}$/, "מספר טלפון לא תקין"),
-  // phoneNumber: Yup.string()
-  //   .required("נא להזין מספר טלפון")
-  //   .test('phone-digits', 'מספר טלפון חייב להכיל 3-15 ספרות', (value) => {
-  //     if (!value) return false;
-  //     const digits = value.replace(/\D/g, '');
-  //     return digits.length >= 3 && digits.length <= 15;
-  //   }),
+
   // Step 3
   country: Yup.string().required("נא להזין עיר"),
   city: Yup.string().required("נא להזין עיר"),
@@ -57,6 +51,8 @@ export const validationSchema = Yup.object({
     .test("card-number", "מספר כרטיס לא תקין", (value) => {
       if (!value) return false;
       const digits = value.replace(/\D/g, "");
+      // allow tranzila test card
+      if (digits === "55555444") return true;
       if (digits.length < 12 || digits.length > 19) return false;
       return luhnCheck(digits);
     }),

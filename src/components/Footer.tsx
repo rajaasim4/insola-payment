@@ -7,7 +7,7 @@ const Footer = () => {
     },
     {
       label: "מדיניות פרטיות",
-      path: "https://insola.co/pages/%D7%9E%D7%93%D7%A0%D7%99%D7%95%D7%AA-%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA",
+      path: "https://dailyhealthinsider.net/privacy-policy/",
     },
     {
       label: "מדיניות משלוחים",
