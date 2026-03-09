@@ -38,6 +38,8 @@ export const sendOrderToZapier = async (data: ZapierPayload) => {
   try {
     await fetch(WEBHOOK_URL, {
       method: "POST",
+      // mode: "no-cors",
+      // headers: { "Content-Type": "application/json" },
       // headers: {
       //   "Content-Type": "application/json",
       // },

@@ -36,6 +36,23 @@ export const DownsellModal = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
 
+  // const prevPrice = JSON.parse(localStorage.getItem("orderForm")!);
+
+  // const newtotalPrice = addPrice + 15 + Number(prevPrice.price);
+
+  const [newtotalPrice, setNewTotalPrice] = useState<number>(0);
+  const [totalQuantites, setAllQuantties] = useState(0);
+
+  useEffect(() => {
+    const prevPriceRaw = localStorage.getItem("orderForm");
+    if (prevPriceRaw) {
+      const prevPrice = JSON.parse(prevPriceRaw);
+      setAllQuantties(Number(prevPrice.quantity));
+      const calculatedTotal = addPrice + 15 + Number(prevPrice.price);
+      setNewTotalPrice(calculatedTotal);
+    }
+  }, []);
+
   const testimonials = [
     {
       text: "שדרגתי ל-4 זוגות, אחד לכל סוג נעל. שינה לי את החיים לגמרי, אין יותר כאבי גב",
@@ -383,8 +400,8 @@ export const DownsellModal = ({
                       על השידרוג.
                     </div>
                     <div className="text-sm font-bold text-gray-700 mt-1.5">
-                      סה"כ כולל משלוח עד הדלת: ₪{totalPrice} ש"ח בעבור{" "}
-                      {totalPairs} מדרסי Insola
+                      סה"כ כולל משלוח עד הדלת: ₪{newtotalPrice} ש"ח בעבור{" "}
+                      {addPairs + totalQuantites} מדרסי Insola
                     </div>
                   </div>
 
