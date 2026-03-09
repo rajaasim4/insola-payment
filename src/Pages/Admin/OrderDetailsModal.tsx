@@ -26,6 +26,9 @@ interface OrderData {
   marketingSMS: boolean;
   createdAt: string;
   updatedAt: string;
+  relatedOrders?: OrderData[];
+  consolidatedTotalAmount?: number;
+  consolidatedTotalQuantity?: number;
 }
 
 interface OrderDetailsModalProps {
@@ -64,19 +67,6 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
         return "נכשל";
       default:
         return status;
-    }
-  };
-
-  const getOrderSourceText = (source: string) => {
-    switch (source) {
-      case "main_checkout":
-        return "רכישה ראשית";
-      case "upsell":
-        return "שדרוג";
-      case "downsell":
-        return "הנחה";
-      default:
-        return source;
     }
   };
 
@@ -222,54 +212,101 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                         <Package className="h-5 w-5 text-blue-500" />
                         <h3 className="font-bold text-gray-900">פרטי מוצר</h3>
                       </div>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="space-y-2 text-sm">
-                          <p>
-                            <span className="text-gray-500">מקור הזמנה:</span>{" "}
-                            <span className="font-medium">
-                              {getOrderSourceText(order.orderSource)}
-                            </span>
-                          </p>
-                          <p>
-                            <span className="text-gray-500">כמות:</span>{" "}
-                            <span className="font-medium">
-                              {order.quantity} יחידות
-                            </span>
-                          </p>
-                          <p>
-                            <span className="text-gray-500">מחיר ליחידה:</span>{" "}
-                            <span className="font-medium">₪{order.price}</span>
-                          </p>
-                          {order.originalOrderId && (
-                            <p>
-                              <span className="text-gray-500">הזמנה מקורית:</span>{" "}
-                              <span className="font-medium text-xs">
-                                #{order.originalOrderId}
-                              </span>
-                            </p>
-                          )}
+                      
+                      {/* Main Order */}
+                      <div className="bg-white p-4 rounded-lg border border-gray-200 mb-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900">רכישה ראשית</h4>
+                          <span className="text-sm font-medium text-gray-600">{order.quantity} זוג{order.quantity > 1 ? 'ות' : ''}</span>
                         </div>
-                        <div className="space-y-2 text-sm">
-                          <p>
-                            <span className="text-gray-500">סכום ביניים:</span>{" "}
-                            <span className="font-medium">
-                              ₪{order.price * order.quantity}
-                            </span>
-                          </p>
-                          <p>
-                            <span className="text-gray-500">עלות משלוח:</span>{" "}
-                            <span className="font-medium">
-                              ₪{order.shippingCost}
-                            </span>
-                          </p>
-                          <p className="pt-2 border-t border-gray-200">
-                            <span className="text-gray-500">סה"כ:</span>
-                            <span className="font-bold text-lg text-green-600 mr-2">
-                              ₪{order.totalAmount}
-                            </span>
-                          </p>
+                        <div className="grid md:grid-cols-2 gap-4 text-sm">
+                          <div className="space-y-1">
+                            <p>
+                              <span className="text-gray-500">מחיר ליחידה:</span>{" "}
+                              <span className="font-medium">₪{order.price}</span>
+                            </p>
+                            <p>
+                              <span className="text-gray-500">כמות:</span>{" "}
+                              <span className="font-medium">{order.quantity} יחידות</span>
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <p>
+                              <span className="text-gray-500">עלות משלוח:</span>{" "}
+                              <span className="font-medium">₪{order.shippingCost}</span>
+                            </p>
+                            <p className="pt-1 border-t border-gray-200">
+                              <span className="text-gray-500">סכום:</span>{" "}
+                              <span className="font-bold text-green-600">₪{order.totalAmount}</span>
+                            </p>
+                          </div>
                         </div>
                       </div>
+
+                      {/* Related Orders (Upsells/Downsells) */}
+                      {order.relatedOrders && order.relatedOrders.length > 0 && (
+                        <div className="space-y-3">
+                          {order.relatedOrders.map((relatedOrder) => (
+                            <div key={relatedOrder._id} className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                              <div className="flex items-center justify-between mb-2">
+                                <h4 className="font-semibold text-gray-900">
+                                  {relatedOrder.isUpsell ? '✨ שדרוג לחבילה מורחבת' : '📦 הצעה נוספת'}
+                                </h4>
+                                <span className="text-sm font-medium text-gray-600">
+                                  +{relatedOrder.quantity} זוג{relatedOrder.quantity > 1 ? 'ות' : ''} נוספ{relatedOrder.quantity > 1 ? 'ים' : ''}
+                                </span>
+                              </div>
+                              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                                <div className="space-y-1">
+                                  <p>
+                                    <span className="text-gray-500">מזהה עסקה:</span>{" "}
+                                    <span className="font-medium">#{relatedOrder.transactionId}</span>
+                                  </p>
+                                  <p>
+                                    <span className="text-gray-500">תאריך:</span>{" "}
+                                    <span className="font-medium">
+                                      {new Date(relatedOrder.createdAt).toLocaleDateString('he-IL')}
+                                    </span>
+                                  </p>
+                                  <p className="text-xs text-green-600 font-medium">משלוח חינם!</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <p>
+                                    <span className="text-gray-500">סטטוס:</span>{" "}
+                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusColor(relatedOrder.paymentStatus)}`}>
+                                      {getStatusText(relatedOrder.paymentStatus)}
+                                    </span>
+                                  </p>
+                                  <p className="pt-1 border-t border-blue-200">
+                                    <span className="text-gray-500">סכום:</span>{" "}
+                                    <span className="font-bold text-green-600">₪{relatedOrder.totalAmount}</span>
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Consolidated Total */}
+                      {order.consolidatedTotalAmount && order.consolidatedTotalAmount > order.totalAmount && (
+                        <div className="bg-green-50 p-4 rounded-lg border-2 border-green-200 mt-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-700">סה"כ לתשלום</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                סה"כ {order.consolidatedTotalQuantity} מדרסי Insola
+                              </p>
+                              {order.relatedOrders && order.relatedOrders.length > 0 && (
+                                <p className="text-xs text-green-600 font-medium mt-1">
+                                  ✓ נהנית ממשלוח חינם על השדרוג!
+                                </p>
+                              )}
+                            </div>
+                            <span className="text-2xl font-bold text-green-600">₪{order.consolidatedTotalAmount}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -54,6 +54,36 @@ export async function createOrder(payload: CreateOrderPayload) {
   return data;
 }
 
+export async function getGroupedOrders(filters?: {
+  paymentStatus?: string;
+  email?: string;
+  search?: string;
+  dateRange?: 'all' | '24h' | '7d' | '30d';
+  limit?: number;
+  skip?: number;
+}) {
+  const baseUrl = getApiBaseUrl();
+  const params = new URLSearchParams();
+  
+  if (filters?.paymentStatus) params.append('paymentStatus', filters.paymentStatus);
+  if (filters?.email) params.append('email', filters.email);
+  if (filters?.search) params.append('search', filters.search);
+  if (filters?.dateRange) params.append('dateRange', filters.dateRange);
+  if (filters?.limit) params.append('limit', filters.limit.toString());
+  if (filters?.skip) params.append('skip', filters.skip.toString());
+  
+  const url = `${baseUrl}/api/orders/grouped?${params.toString()}`;
+
+  const res = await fetch(url, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to fetch grouped orders");
+  return data;
+}
+
 export async function getOrders(filters?: {
   paymentStatus?: string;
   orderSource?: string;

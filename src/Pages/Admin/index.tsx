@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import OrderDetailsModal from "./OrderDetailsModal";
-import { getOrders, getOrderStats } from "../../api/orders";
+import { getGroupedOrders, getOrderStats } from "../../api/orders";
 import { verifyAdmin, logoutAdmin } from "../../api/admin";
 
 // Order Data Type from API
@@ -38,6 +38,9 @@ interface OrderData {
   marketingSMS: boolean;
   createdAt: string;
   updatedAt: string;
+  relatedOrders?: OrderData[];
+  consolidatedTotalAmount?: number;
+  consolidatedTotalQuantity?: number;
 }
 
 
@@ -47,6 +50,7 @@ interface AdminDashboardProps {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [dateRange, setDateRange] = useState<"all" | "24h" | "7d" | "30d">("all");
   const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [orders, setOrders] = useState<OrderData[]>([]);
@@ -54,6 +58,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(20);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const navigate = useNavigate();
   
   // Statistics state
@@ -62,7 +67,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     monthlyIncome: 0,
     newCustomers: 0,
   });
-
+  
   // Check authentication on mount
   useEffect(() => {
     checkAuth();
@@ -90,14 +95,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   // Fetch orders from API
   useEffect(() => {
     fetchOrders();
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, dateRange]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
       const skip = (currentPage - 1) * limit;
-      const response = await getOrders({
+      const response = await getGroupedOrders({
         search: searchTerm || undefined,
+        dateRange,
         limit,
         skip,
       });
@@ -227,19 +233,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     }
   };
 
-  const getOrderSourceText = (source: string) => {
-    switch (source) {
-      case "main_checkout":
-        return "רכישה ראשית";
-      case "upsell":
-        return "שדרוג";
-      case "downsell":
-        return "הנחה";
-      default:
-        return source;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-100 font-sans" dir="rtl">
       {/* Top Navigation */}
@@ -326,6 +319,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                   className="pl-4 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#C73126] focus:border-transparent outline-none w-full sm:w-64"
                 />
               </div>
+              <select
+                value={dateRange}
+                onChange={(e) => {
+                  setCurrentPage(1);
+                  setDateRange(e.target.value as "all" | "24h" | "7d" | "30d");
+                }}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#C73126] focus:border-transparent outline-none"
+              >
+                <option value="all">כל הזמן</option>
+                <option value="24h">24 שעות אחרונות</option>
+                <option value="7d">7 ימים אחרונים</option>
+                <option value="30d">30 ימים אחרונים</option>
+              </select>
               <button
                 onClick={handleExportCSV}
                 className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
@@ -374,55 +380,109 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                       לא נמצאו הזמנות
                     </td>
                   </tr>
-                ) : (
+) : (
                   orders.map((order) => (
-                    <tr
-                      key={order._id}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        #{order.transactionId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-bold text-gray-900">
-                          {order.firstName} {order.lastName}
-                        </div>
-                        <div className="text-sm text-gray-500">{order.email}</div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          {order.phoneNumber}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {getOrderSourceText(order.orderSource)} ({order.quantity} יח')
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          סכום: ₪{order.totalAmount}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          {order.city}, {order.streetAddress}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
-                        ₪{order.totalAmount}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full border ${getStatusColor(order.paymentStatus)}`}
-                        >
-                          {getStatusText(order.paymentStatus)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => handleViewDetails(order)}
-                          className="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-lg hover:bg-blue-100 transition-colors"
-                          title="צפה בפרטים"
-                        >
-                          <Eye size={18} />
-                        </button>
-                      </td>
-                    </tr>
+                    <React.Fragment key={order._id}>
+                      <tr
+                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => setExpandedOrderId(expandedOrderId === order._id ? null : order._id)}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          #{order.transactionId}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-bold text-gray-900">
+                            {order.firstName} {order.lastName}
+                          </div>
+                          <div className="text-sm text-gray-500">{order.email}</div>
+                          <div className="text-xs text-gray-400 mt-1">
+                            {order.phoneNumber}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900 font-semibold">
+                            רכישה ראשית ({order.quantity} יח')
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            סכום: ₪{order.totalAmount}
+                          </div>
+                          {order.relatedOrders && order.relatedOrders.length > 0 && (
+                            <div className="text-xs text-blue-600 mt-1 font-medium">
+                              + {order.relatedOrders.length} שדרוג{order.relatedOrders.length > 1 ? 'ים' : ''}
+                            </div>
+                          )}
+                          <div className="text-xs text-gray-400">
+                            {order.city}, {order.streetAddress}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
+                          ₪{order.consolidatedTotalAmount || order.totalAmount}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full border ${getStatusColor(order.paymentStatus)}`}
+                          >
+                            {getStatusText(order.paymentStatus)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleViewDetails(order)}
+                              className="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-lg hover:bg-blue-100 transition-colors"
+                              title="צפה בפרטים"
+                            >
+                              <Eye size={18} />
+                            </button>
+                          
+                          </div>
+                        </td>
+                      </tr>
+                      {expandedOrderId === order._id && order.relatedOrders && order.relatedOrders.length > 0 && (
+                        <tr className="bg-blue-50">
+                          <td colSpan={6} className="px-6 py-4">
+                            <div className="space-y-2">
+                              <div className="text-sm font-semibold text-gray-700 mb-3">פירוט שדרוגים:</div>
+                              {order.relatedOrders.map((relatedOrder) => (
+                                <div key={relatedOrder._id} className="bg-white p-3 rounded-lg border border-blue-200">
+                                  <div className="flex justify-between items-start">
+                                    <div>
+                                      <div className="text-sm font-medium text-gray-900">
+                                        {relatedOrder.isUpsell ? '✨ שדרוג' : '📦 הצעה נוספת'} ({relatedOrder.quantity} יח')
+                                      </div>
+                                      <div className="text-xs text-gray-500 mt-1">
+                                        מזהה עסקה: #{relatedOrder.transactionId}
+                                      </div>
+                                      <div className="text-xs text-gray-400 mt-1">
+                                        {new Date(relatedOrder.createdAt).toLocaleString('he-IL')}
+                                      </div>
+                                    </div>
+                                    <div className="text-left">
+                                      <div className="text-sm font-bold text-green-600">
+                                        ₪{relatedOrder.totalAmount}
+                                      </div>
+                                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full border mt-1 ${getStatusColor(relatedOrder.paymentStatus)}`}>
+                                        {getStatusText(relatedOrder.paymentStatus)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                              <div className="border-t border-blue-200 pt-3 mt-3">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm font-semibold text-gray-700">סה"כ כולל שדרוגים:</span>
+                                  <span className="text-lg font-bold text-green-600">₪{order.consolidatedTotalAmount}</span>
+                                </div>
+                                <div className="flex justify-between items-center mt-1">
+                                  <span className="text-xs text-gray-500">סה"כ יחידות:</span>
+                                  <span className="text-sm font-medium text-gray-700">{order.consolidatedTotalQuantity} יח'</span>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))
                 )}
               </tbody>
