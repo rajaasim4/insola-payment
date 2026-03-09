@@ -35,6 +35,7 @@ export const UpsellModal = ({
   const [showClose, setShowClose] = useState(false);
   const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
   const [showCvvModal, setShowCvvModal] = useState(false);
+  const [isAcceptFlowActive, setIsAcceptFlowActive] = useState(false);
   const [cvv, setCvv] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
@@ -90,8 +91,9 @@ export const UpsellModal = ({
       localStorage.setItem(timerKey, endTime);
     }
 
+    const isCvvStepActive = showCvvModal || isAcceptFlowActive || isProcessing;
     const remaining = getRemainingTime();
-    if (remaining <= 0 && !showCvvModal) {
+    if (remaining <= 0 && !isCvvStepActive) {
       onExpire();
       return;
     }
@@ -102,7 +104,7 @@ export const UpsellModal = ({
     const interval = setInterval(() => {
       const current = getRemainingTime();
       setTimeLeft(Math.max(0, current));
-      if (current <= 0 && !showCvvModal) {
+      if (current <= 0 && !isCvvStepActive) {
         clearInterval(interval);
         onExpire();
       }
@@ -112,7 +114,16 @@ export const UpsellModal = ({
       clearTimeout(closeTimer);
       clearInterval(interval);
     };
-  }, [isOpen, orderId, onExpire, getTimerKey, getRemainingTime, showCvvModal]);
+  }, [
+    isOpen,
+    orderId,
+    onExpire,
+    getTimerKey,
+    getRemainingTime,
+    showCvvModal,
+    isAcceptFlowActive,
+    isProcessing,
+  ]);
 
   // Testimonials rotation
   useEffect(() => {
@@ -196,9 +207,11 @@ export const UpsellModal = ({
   };
 
   const handleAccept = async () => {
+    setIsAcceptFlowActive(true);
     const hasSavedCard = await checkHasSavedCard();
     if (!hasSavedCard) {
       toast.error("לא נמצא כרטיס שמור. אנא צור קשר עם התמיכה.");
+      setIsAcceptFlowActive(false);
       return;
     }
     setCvv("");
@@ -234,6 +247,7 @@ export const UpsellModal = ({
 
       if (result.tranzila.error_code === 0) {
         localStorage.removeItem(getTimerKey());
+        setIsAcceptFlowActive(false);
         setShowCvvModal(false);
         onAccept(
           option.addPairs,
@@ -257,6 +271,10 @@ export const UpsellModal = ({
   };
 
   const handleClose = () => {
+    if (showCvvModal || isAcceptFlowActive || isProcessing) {
+      return;
+    }
+
     if (showClose) {
       localStorage.removeItem(getTimerKey());
       onClose();
@@ -569,6 +587,7 @@ export const UpsellModal = ({
                 onClick={() => {
                   setShowCvvModal(false);
                   setCvv("");
+                  setIsAcceptFlowActive(false);
                 }}
                 disabled={isProcessing}
               >
