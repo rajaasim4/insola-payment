@@ -26,7 +26,7 @@ export const DownsellModal = ({
   addPairs,
   addPrice,
   totalPairs,
-  totalPrice,
+  // totalPrice,
   onAccept,
   onDecline,
 }: DownsellModalProps) => {
