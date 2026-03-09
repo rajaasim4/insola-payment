@@ -2,6 +2,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { upsellOptions } from "../../data/upsellOptions";
 import { sendOrderToZapier } from "../../utils/helper";
+import { useAtomValue } from "jotai";
+import { queryParamsAtom } from "../../store";
 
 interface OrderSummary {
   originalQuantity: number;
@@ -16,6 +18,7 @@ interface OrderSummary {
 }
 
 const ThankYou = () => {
+  const queryParams = useAtomValue(queryParamsAtom);
   const location = useLocation();
   const navigate = useNavigate();
   const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
@@ -158,6 +161,7 @@ const ThankYou = () => {
         // Marketing
         marketingEmails: formData?.marketingEmails ?? false,
         marketingSMS: formData?.marketingSMS ?? false,
+        utms: queryParams,
       };
 
       console.log("Data sent to zapier", payload);

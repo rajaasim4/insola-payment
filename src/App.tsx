@@ -12,8 +12,13 @@ import ThankYou from "./Pages/ThankYou";
 import LoginPage from "./Pages/Login";
 import AdminDashboard from "./Pages/Admin";
 import { useEffect } from "react";
+import { useQueryParams } from "./hooks/useQueryParams";
+// import { useAtomValue } from "jotai";
+// import { queryParamsAtom } from "./store";
 
 function App() {
+  useQueryParams(); // parse query params on page load
+  // const queryParams = useAtomValue(queryParamsAtom);
   const tagManagerArgs = {
     gtmId: GTM_ID,
   };
