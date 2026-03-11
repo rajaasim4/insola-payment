@@ -44,7 +44,7 @@ const MultiStepForm = () => {
 
   const initialValues: FormValues = {
     selectedProductId: formData.selectedProductId || 4,
-    size: formData.size || "S-M",
+    size: formData.size || "S-M: 36-42",
     firstName: formData.firstName || "",
     lastName: formData.lastName || "",
     email: formData.email || "",

@@ -118,14 +118,14 @@ const StepOne: React.FC<StepProps> = ({
             type="radio"
             name="size"
             className="size-5"
-            value="S-M"
+            value="S-M: 36-42"
             id="small"
-            checked={values.size === "S-M"}
+            checked={values.size === "S-M: 36-42"}
             onChange={handleChange}
           />
           <label
             htmlFor="small"
-            className={values.size === "S-M" ? "font-bold" : ""}
+            className={values.size === "S-M: 36-42" ? "font-bold" : ""}
           >
             <strong>S-M: 36-42</strong>
           </label>
@@ -135,14 +135,14 @@ const StepOne: React.FC<StepProps> = ({
             type="radio"
             name="size"
             className="size-5"
-            value="L-XL"
+            value="L-XL 42-47"
             id="large"
-            checked={values.size === "L-XL"}
+            checked={values.size === "L-XL 42-47"}
             onChange={handleChange}
           />
           <label
             htmlFor="large"
-            className={values.size === "L-XL" ? "font-bold" : ""}
+            className={values.size === "L-XL 42-47" ? "font-bold" : ""}
           >
             <strong>L-XL 42-47</strong>
           </label>

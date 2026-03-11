@@ -36,7 +36,7 @@ export const persistentFormAtom = atomWithStorage<PersistentFormData>(
   "orderForm",
   {
     selectedProductId: 4,
-    size: "S-M",
+    size: "S-M: 36-42",
     warranty: false,
     firstName: "",
     lastName: "",
