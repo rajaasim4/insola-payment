@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { upsellOptions } from "../../data/upsellOptions";
 import { sendOrderToZapier } from "../../utils/helper";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { queryParamsAtom } from "../../store";
 
 interface OrderSummary {
@@ -19,6 +19,8 @@ interface OrderSummary {
 
 const ThankYou = () => {
   const queryParams = useAtomValue(queryParamsAtom);
+  const clearQueryParams = useSetAtom(queryParamsAtom);
+
   const location = useLocation();
   const navigate = useNavigate();
   const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
@@ -170,6 +172,7 @@ const ThankYou = () => {
 
       // ✅ Clear order form AFTER sending
       localStorage.removeItem("orderForm");
+      clearQueryParams({});
     } catch (error) {
       console.error("Failed to send order to Zapier:", error);
     }

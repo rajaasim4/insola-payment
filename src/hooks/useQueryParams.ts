@@ -1,26 +1,22 @@
 // hooks/useQueryParams.ts
+import { useAtom } from "jotai";
 import { useEffect } from "react";
-import { useSetAtom } from "jotai";
 import { queryParamsAtom } from "../store";
 
 export const useQueryParams = () => {
-  const setQueryParams = useSetAtom(queryParamsAtom);
+  const [queryParams, setQueryParams] = useAtom(queryParamsAtom);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const paramObj: Record<string, string> = {};
+    // Parse ALL query params from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const params: { [key: string]: string } = {};
 
-    params.forEach((value, key) => {
-      paramObj[key] = value;
-    });
-
-    if (Object.keys(paramObj).length) {
-      setQueryParams(paramObj);
-      localStorage.setItem("query_params", JSON.stringify(paramObj));
-    } else {
-      // fallback to localStorage if no query params
-      const stored = localStorage.getItem("query_params");
-      if (stored) setQueryParams(JSON.parse(stored));
+    for (const [key, value] of urlParams.entries()) {
+      params[key] = value;
     }
-  }, [setQueryParams]);
+
+    setQueryParams(params);
+  }, []);
+
+  return queryParams;
 };

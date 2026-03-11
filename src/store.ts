@@ -114,8 +114,4 @@ export const formValidationAtom = atom((get) => {
   };
 });
 
-export interface UtmData {
-  [key: string]: string;
-}
-
-export const queryParamsAtom = atom<Record<string, string>>({});
+export const queryParamsAtom = atom<{ [key: string]: string }>({});
