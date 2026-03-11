@@ -123,7 +123,26 @@ const ThankYou = () => {
 
   console.log(orderSummary);
   console.log(JSON.stringify(localStorage.getItem("orderForm")));
+  const getOrderFormSize = (): string | null => {
+    try {
+      const stored = localStorage.getItem("orderForm");
 
+      if (!stored) return null;
+
+      const parsed = JSON.parse(stored);
+
+      return parsed?.size || null;
+    } catch (error) {
+      console.error("Failed to read size from orderForm", error);
+      return null;
+    }
+  };
+  const [size, setSize] = useState<string | null>(null);
+
+  useEffect(() => {
+    const orderSize = getOrderFormSize();
+    setSize(orderSize);
+  }, []);
   useEffect(() => {
     if (!orderSummary) return;
 
@@ -232,6 +251,12 @@ const ThankYou = () => {
               <span className="font-medium">משלוח</span>
               <span>₪15</span>
             </div>
+            {size && (
+              <div className="flex justify-between items-center py-2 text-sm text-gray-600 border-b border-gray-200">
+                <span className="font-medium">מידה</span>
+                <span>{size}</span>
+              </div>
+            )}
             {/* )} */}
 
             {/* Upgrade Section (if applicable) */}

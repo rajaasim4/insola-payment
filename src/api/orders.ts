@@ -3,36 +3,31 @@ function getApiBaseUrl(): string {
 }
 
 export interface CreateOrderPayload {
-
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber: string;
-  
-  
+
   city: string;
   streetAddress: string;
   postalCode: string;
   country?: string;
-  
 
   quantity: number;
   price: number;
   totalAmount: number;
   shippingCost?: number;
-  
+  size: string;
 
   transactionId: string;
-  paymentStatus: 'success' | 'failed' | 'pending';
-  
+  paymentStatus: "success" | "failed" | "pending";
 
-  orderSource: 'main_checkout' | 'upsell' | 'downsell';
-  
+  orderSource: "main_checkout" | "upsell" | "downsell";
 
   isUpsell?: boolean;
   isDownsell?: boolean;
   originalOrderId?: string;
-  
+
   // Marketing Preferences
   marketingEmails?: boolean;
   marketingSMS?: boolean;
@@ -58,20 +53,21 @@ export async function getGroupedOrders(filters?: {
   paymentStatus?: string;
   email?: string;
   search?: string;
-  dateRange?: 'all' | '24h' | '7d' | '30d';
+  dateRange?: "all" | "24h" | "7d" | "30d";
   limit?: number;
   skip?: number;
 }) {
   const baseUrl = getApiBaseUrl();
   const params = new URLSearchParams();
-  
-  if (filters?.paymentStatus) params.append('paymentStatus', filters.paymentStatus);
-  if (filters?.email) params.append('email', filters.email);
-  if (filters?.search) params.append('search', filters.search);
-  if (filters?.dateRange) params.append('dateRange', filters.dateRange);
-  if (filters?.limit) params.append('limit', filters.limit.toString());
-  if (filters?.skip) params.append('skip', filters.skip.toString());
-  
+
+  if (filters?.paymentStatus)
+    params.append("paymentStatus", filters.paymentStatus);
+  if (filters?.email) params.append("email", filters.email);
+  if (filters?.search) params.append("search", filters.search);
+  if (filters?.dateRange) params.append("dateRange", filters.dateRange);
+  if (filters?.limit) params.append("limit", filters.limit.toString());
+  if (filters?.skip) params.append("skip", filters.skip.toString());
+
   const url = `${baseUrl}/api/orders/grouped?${params.toString()}`;
 
   const res = await fetch(url, {
@@ -80,7 +76,8 @@ export async function getGroupedOrders(filters?: {
   });
 
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Failed to fetch grouped orders");
+  if (!res.ok)
+    throw new Error(data.message || "Failed to fetch grouped orders");
   return data;
 }
 
@@ -94,14 +91,15 @@ export async function getOrders(filters?: {
 }) {
   const baseUrl = getApiBaseUrl();
   const params = new URLSearchParams();
-  
-  if (filters?.paymentStatus) params.append('paymentStatus', filters.paymentStatus);
-  if (filters?.orderSource) params.append('orderSource', filters.orderSource);
-  if (filters?.email) params.append('email', filters.email);
-  if (filters?.search) params.append('search', filters.search);
-  if (filters?.limit) params.append('limit', filters.limit.toString());
-  if (filters?.skip) params.append('skip', filters.skip.toString());
-  
+
+  if (filters?.paymentStatus)
+    params.append("paymentStatus", filters.paymentStatus);
+  if (filters?.orderSource) params.append("orderSource", filters.orderSource);
+  if (filters?.email) params.append("email", filters.email);
+  if (filters?.search) params.append("search", filters.search);
+  if (filters?.limit) params.append("limit", filters.limit.toString());
+  if (filters?.skip) params.append("skip", filters.skip.toString());
+
   const url = `${baseUrl}/api/orders?${params.toString()}`;
 
   const res = await fetch(url, {

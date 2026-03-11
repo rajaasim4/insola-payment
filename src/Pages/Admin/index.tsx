@@ -41,8 +41,8 @@ interface OrderData {
   relatedOrders?: OrderData[];
   consolidatedTotalAmount?: number;
   consolidatedTotalQuantity?: number;
+  size: string;
 }
-
 
 interface AdminDashboardProps {
   onLogout?: () => void;
@@ -50,7 +50,9 @@ interface AdminDashboardProps {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateRange, setDateRange] = useState<"all" | "24h" | "7d" | "30d">("all");
+  const [dateRange, setDateRange] = useState<"all" | "24h" | "7d" | "30d">(
+    "all",
+  );
   const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [orders, setOrders] = useState<OrderData[]>([]);
@@ -60,14 +62,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const [limit] = useState(20);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const navigate = useNavigate();
-  
+
   // Statistics state
   const [stats, setStats] = useState({
     totalOrders: 0,
     monthlyIncome: 0,
     newCustomers: 0,
   });
-  
+
   // Check authentication on mount
   useEffect(() => {
     checkAuth();
@@ -78,8 +80,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     try {
       await verifyAdmin();
     } catch (error) {
-      console.error('Authentication failed:', error);
-      navigate('/login');
+      console.error("Authentication failed:", error);
+      navigate("/login");
     }
   };
 
@@ -88,7 +90,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       const response = await getOrderStats();
       setStats(response.stats);
     } catch (error) {
-      console.error('Failed to fetch stats:', error);
+      console.error("Failed to fetch stats:", error);
     }
   };
 
@@ -110,7 +112,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       setOrders(response.orders);
       setTotal(response.total);
     } catch (error) {
-      console.error('Failed to fetch orders:', error);
+      console.error("Failed to fetch orders:", error);
     } finally {
       setLoading(false);
     }
@@ -124,11 +126,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     try {
       await logoutAdmin();
       onLogout?.();
-      navigate('/login');
+      navigate("/login");
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
       // Still redirect even if logout fails
-      navigate('/login');
+      navigate("/login");
     }
   };
 
@@ -165,7 +167,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
     const rows = orders.map((order) => [
       order.transactionId,
-      new Date(order.createdAt).toLocaleDateString('he-IL'),
+      new Date(order.createdAt).toLocaleDateString("he-IL"),
       order.firstName,
       order.lastName,
       order.email,
@@ -268,7 +270,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             <div>
               <p className="text-sm text-gray-500 mb-1">סה"כ הזמנות</p>
               <h3 className="text-2xl font-bold text-gray-900">
-                {stats.totalOrders.toLocaleString('he-IL')}
+                {stats.totalOrders.toLocaleString("he-IL")}
               </h3>
             </div>
             <div className="p-3 bg-blue-50 text-blue-600 rounded-full">
@@ -279,7 +281,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             <div>
               <p className="text-sm text-gray-500 mb-1">הכנסות החודש</p>
               <h3 className="text-2xl font-bold text-gray-900">
-                ₪{stats.monthlyIncome.toLocaleString('he-IL')}
+                ₪{stats.monthlyIncome.toLocaleString("he-IL")}
               </h3>
             </div>
             <div className="p-3 bg-green-50 text-green-600 rounded-full">
@@ -290,7 +292,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             <div>
               <p className="text-sm text-gray-500 mb-1">לקוחות חדשים</p>
               <h3 className="text-2xl font-bold text-gray-900">
-                {stats.newCustomers.toLocaleString('he-IL')}
+                {stats.newCustomers.toLocaleString("he-IL")}
               </h3>
             </div>
             <div className="p-3 bg-purple-50 text-purple-600 rounded-full">
@@ -370,22 +372,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
               <tbody className="divide-y divide-gray-200">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                    <td
+                      colSpan={6}
+                      className="px-6 py-12 text-center text-gray-500"
+                    >
                       טוען הזמנות...
                     </td>
                   </tr>
                 ) : orders.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                    <td
+                      colSpan={6}
+                      className="px-6 py-12 text-center text-gray-500"
+                    >
                       לא נמצאו הזמנות
                     </td>
                   </tr>
-) : (
+                ) : (
                   orders.map((order) => (
                     <React.Fragment key={order._id}>
                       <tr
                         className="hover:bg-gray-50 transition-colors cursor-pointer"
-                        onClick={() => setExpandedOrderId(expandedOrderId === order._id ? null : order._id)}
+                        onClick={() =>
+                          setExpandedOrderId(
+                            expandedOrderId === order._id ? null : order._id,
+                          )
+                        }
                       >
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           #{order.transactionId}
@@ -394,7 +406,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                           <div className="text-sm font-bold text-gray-900">
                             {order.firstName} {order.lastName}
                           </div>
-                          <div className="text-sm text-gray-500">{order.email}</div>
+                          <div className="text-sm text-gray-500">
+                            {order.email}
+                          </div>
                           <div className="text-xs text-gray-400 mt-1">
                             {order.phoneNumber}
                           </div>
@@ -406,11 +420,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                           <div className="text-sm text-gray-500">
                             סכום: ₪{order.totalAmount}
                           </div>
-                          {order.relatedOrders && order.relatedOrders.length > 0 && (
-                            <div className="text-xs text-blue-600 mt-1 font-medium">
-                              + {order.relatedOrders.length} שדרוג{order.relatedOrders.length > 1 ? 'ים' : ''}
-                            </div>
-                          )}
+                          {order.relatedOrders &&
+                            order.relatedOrders.length > 0 && (
+                              <div className="text-xs text-blue-600 mt-1 font-medium">
+                                + {order.relatedOrders.length} שדרוג
+                                {order.relatedOrders.length > 1 ? "ים" : ""}
+                              </div>
+                            )}
                           <div className="text-xs text-gray-400">
                             {order.city}, {order.streetAddress}
                           </div>
@@ -425,7 +441,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                             {getStatusText(order.paymentStatus)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" onClick={(e) => e.stopPropagation()}>
+                        <td
+                          className="px-6 py-4 whitespace-nowrap text-sm font-medium"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleViewDetails(order)}
@@ -434,54 +453,78 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                             >
                               <Eye size={18} />
                             </button>
-                          
                           </div>
                         </td>
                       </tr>
-                      {expandedOrderId === order._id && order.relatedOrders && order.relatedOrders.length > 0 && (
-                        <tr className="bg-blue-50">
-                          <td colSpan={6} className="px-6 py-4">
-                            <div className="space-y-2">
-                              <div className="text-sm font-semibold text-gray-700 mb-3">פירוט שדרוגים:</div>
-                              {order.relatedOrders.map((relatedOrder) => (
-                                <div key={relatedOrder._id} className="bg-white p-3 rounded-lg border border-blue-200">
-                                  <div className="flex justify-between items-start">
-                                    <div>
-                                      <div className="text-sm font-medium text-gray-900">
-                                        {relatedOrder.isUpsell ? '✨ שדרוג' : '📦 הצעה נוספת'} ({relatedOrder.quantity} יח')
+                      {expandedOrderId === order._id &&
+                        order.relatedOrders &&
+                        order.relatedOrders.length > 0 && (
+                          <tr className="bg-blue-50">
+                            <td colSpan={6} className="px-6 py-4">
+                              <div className="space-y-2">
+                                <div className="text-sm font-semibold text-gray-700 mb-3">
+                                  פירוט שדרוגים:
+                                </div>
+                                {order.relatedOrders.map((relatedOrder) => (
+                                  <div
+                                    key={relatedOrder._id}
+                                    className="bg-white p-3 rounded-lg border border-blue-200"
+                                  >
+                                    <div className="flex justify-between items-start">
+                                      <div>
+                                        <div className="text-sm font-medium text-gray-900">
+                                          {relatedOrder.isUpsell
+                                            ? "✨ שדרוג"
+                                            : "📦 הצעה נוספת"}{" "}
+                                          ({relatedOrder.quantity} יח')
+                                        </div>
+                                        <div className="text-xs text-gray-500 mt-1">
+                                          מזהה עסקה: #
+                                          {relatedOrder.transactionId}
+                                        </div>
+                                        <div className="text-xs text-gray-400 mt-1">
+                                          {new Date(
+                                            relatedOrder.createdAt,
+                                          ).toLocaleString("he-IL")}
+                                        </div>
                                       </div>
-                                      <div className="text-xs text-gray-500 mt-1">
-                                        מזהה עסקה: #{relatedOrder.transactionId}
+                                      <div className="text-left">
+                                        <div className="text-sm font-bold text-green-600">
+                                          ₪{relatedOrder.totalAmount}
+                                        </div>
+                                        <span
+                                          className={`px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full border mt-1 ${getStatusColor(relatedOrder.paymentStatus)}`}
+                                        >
+                                          {getStatusText(
+                                            relatedOrder.paymentStatus,
+                                          )}
+                                        </span>
                                       </div>
-                                      <div className="text-xs text-gray-400 mt-1">
-                                        {new Date(relatedOrder.createdAt).toLocaleString('he-IL')}
-                                      </div>
-                                    </div>
-                                    <div className="text-left">
-                                      <div className="text-sm font-bold text-green-600">
-                                        ₪{relatedOrder.totalAmount}
-                                      </div>
-                                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full border mt-1 ${getStatusColor(relatedOrder.paymentStatus)}`}>
-                                        {getStatusText(relatedOrder.paymentStatus)}
-                                      </span>
                                     </div>
                                   </div>
-                                </div>
-                              ))}
-                              <div className="border-t border-blue-200 pt-3 mt-3">
-                                <div className="flex justify-between items-center">
-                                  <span className="text-sm font-semibold text-gray-700">סה"כ כולל שדרוגים:</span>
-                                  <span className="text-lg font-bold text-green-600">₪{order.consolidatedTotalAmount}</span>
-                                </div>
-                                <div className="flex justify-between items-center mt-1">
-                                  <span className="text-xs text-gray-500">סה"כ יחידות:</span>
-                                  <span className="text-sm font-medium text-gray-700">{order.consolidatedTotalQuantity} יח'</span>
+                                ))}
+                                <div className="border-t border-blue-200 pt-3 mt-3">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-sm font-semibold text-gray-700">
+                                      סה"כ כולל שדרוגים:
+                                    </span>
+                                    <span className="text-lg font-bold text-green-600">
+                                      ₪{order.consolidatedTotalAmount}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between items-center mt-1">
+                                    <span className="text-xs text-gray-500">
+                                      סה"כ יחידות:
+                                    </span>
+                                    <span className="text-sm font-medium text-gray-700">
+                                      {order.consolidatedTotalQuantity} יח'
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
+                            </td>
+                          </tr>
+                        )}
                     </React.Fragment>
                   ))
                 )}
@@ -492,7 +535,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           {/* Pagination */}
           <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
             <span className="text-sm text-gray-500">
-              מציג {((currentPage - 1) * limit) + 1}-{Math.min(currentPage * limit, total)} מתוך {total} תוצאות
+              מציג {(currentPage - 1) * limit + 1}-
+              {Math.min(currentPage * limit, total)} מתוך {total} תוצאות
             </span>
             <div className="flex gap-2 items-center">
               <button
