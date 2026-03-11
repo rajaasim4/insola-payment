@@ -143,6 +143,7 @@ const ThankYou = () => {
         streetAddress: formData?.streetAddress || "",
         postalCode: formData?.postalCode || "",
         country: formData?.country || "",
+        size: formData?.size || "",
 
         // Quantities
         originalQuantity: orderSummary.originalQuantity,
