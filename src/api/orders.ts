@@ -14,6 +14,7 @@ export interface CreateOrderPayload {
   country?: string;
 
   quantity: number;
+  size: string;
   price: number;
   totalAmount: number;
   shippingCost?: number;

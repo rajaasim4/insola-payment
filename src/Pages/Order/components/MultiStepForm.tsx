@@ -139,6 +139,7 @@ const MultiStepForm = () => {
             postalCode: values.postalCode,
             country: values.country || "Israel",
             quantity: unitsNumber,
+            size: values.size,
             price: unitPrice,
             size: values.size,
             totalAmount: totalWithShipping,
