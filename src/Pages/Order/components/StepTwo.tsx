@@ -2,13 +2,6 @@ import { FaUserLarge } from "react-icons/fa6";
 import type { StepProps } from "../../../types";
 import TagManager from "react-gtm-module";
 
-// function formatPhoneNumber(input: string): string {
-//   // Remove all non-digit characters
-//   const digits = input.replace(/\D/g, "");
-//   // Limit to 15 digits (Tranzila max)
-//   return digits.slice(0, 15);
-// }
-
 const StepTwo: React.FC<StepProps> = ({
   values,
   handleChange,

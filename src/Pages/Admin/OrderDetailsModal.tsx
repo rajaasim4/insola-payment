@@ -13,7 +13,6 @@ interface OrderData {
   streetAddress: string;
   postalCode: string;
   quantity: number;
-  size: string;
   price: number;
   totalAmount: number;
   shippingCost: number;
@@ -239,7 +238,11 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                             <p>
                               <span className="text-gray-500">מידה:</span>{" "}
                               <span className="font-medium">
-                                {order.size === "S-M" ? "S-M: 36-42" : order.size === "L-XL" ? "L-XL: 42-47" : order.size}
+                                {order.size === "S-M"
+                                  ? "S-M: 36-42"
+                                  : order.size === "L-XL"
+                                    ? "L-XL: 42-47"
+                                    : order.size}
                               </span>
                             </p>
                             <p>

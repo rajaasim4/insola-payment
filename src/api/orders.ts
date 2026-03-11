@@ -18,7 +18,6 @@ export interface CreateOrderPayload {
   price: number;
   totalAmount: number;
   shippingCost?: number;
-  size: string;
 
   transactionId: string;
   paymentStatus: "success" | "failed" | "pending";

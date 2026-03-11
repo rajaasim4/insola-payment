@@ -109,19 +109,6 @@ const MultiStepForm = () => {
         client: Object.keys(client).length ? (client as any) : undefined,
       });
 
-      // const orderId = uuidv4();
-      // const transactionId = result.stored_transaction_id || orderId;
-
-      // navigate("/success", {
-      //   state: {
-      //     orderId,
-      //     quantity: unitsNumber,
-      //     price: unitPrice * unitsNumber,
-      //     initialTransactionId: transactionId,
-      //   },
-      // });
-      // return;
-
       if (result.tranzila.error_code === 0) {
         clearSensitive();
 
@@ -141,7 +128,7 @@ const MultiStepForm = () => {
             quantity: unitsNumber,
             size: values.size,
             price: unitPrice,
-            size: values.size,
+
             totalAmount: totalWithShipping,
             shippingCost: shippingCost,
             transactionId: transactionId,
