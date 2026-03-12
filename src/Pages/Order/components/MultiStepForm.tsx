@@ -8,6 +8,7 @@ import StepFour from "../components/StepFour";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { createCreditCardTransaction } from "../../../api/backend";
+import { encryptCard } from "../../../utils/encryptCard";
 import { createOrder } from "../../../api/orders";
 import { validationSchema } from "../../../utils/schema/validationSchema";
 import type { FormValues } from "../../../types";
@@ -92,12 +93,16 @@ const MultiStepForm = () => {
       if (values.streetAddress) client.address_line_1 = values.streetAddress;
       if (values.postalCode) client.zip = values.postalCode;
 
-      const result = await createCreditCardTransaction({
-        txn_type: "debit",
+      const encrypted_card = await encryptCard({
+        card_number: values.cardNumber.replace(/\s+/g, ""),
+        cvv: values.cvv,
         expire_month,
         expire_year,
-        cvv: values.cvv,
-        card_number: values.cardNumber.replace(/\s+/g, ""),
+      });
+
+      const result = await createCreditCardTransaction({
+        txn_type: "debit",
+        encrypted_card,
         items: [
           {
             name: "Insola Order",

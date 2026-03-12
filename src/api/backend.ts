@@ -1,9 +1,11 @@
 type CreateCreditCardTransactionPayload = {
   txn_type?: "debit" | "credit" | "verify" | "force" | "cancel" | "reversal" | "sto";
-  expire_month: number;
-  expire_year: number;
+  encrypted_card?: string;
+
+  expire_month?: number;
+  expire_year?: number;
   cvv?: string | null;
-  card_number: string;
+  card_number?: string;
   items: Array<{
     name: string;
     type?: string;
