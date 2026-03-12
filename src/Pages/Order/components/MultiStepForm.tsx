@@ -1,7 +1,7 @@
 import StepOne from "../components/StepOne";
 import StepTwo from "../components/StepTwo";
 import StepThree from "../components/StepThree";
-import { Formik, Form, type FormikHelpers } from "formik";
+import { Formik, Form, type FormikHelpers, useFormikContext } from "formik";
 import { useAtom } from "jotai";
 import { orderFormAtom, clearSensitiveDataAtom } from "../../../store";
 import StepFour from "../components/StepFour";
@@ -14,6 +14,67 @@ import { validationSchema } from "../../../utils/schema/validationSchema";
 import type { FormValues } from "../../../types";
 import { v4 as uuidv4 } from "uuid";
 import TagManager from "react-gtm-module";
+import { useEffect, useRef } from "react";
+import { saveAbandonedCart, markCartConverted } from "../../../api/abandonedCarts";
+
+function CartAutoSave() {
+  const { values, isSubmitting } = useFormikContext<FormValues>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedRef = useRef(false);
+
+  // Reset saved flag when key fields change (user edited again)
+  useEffect(() => {
+    savedRef.current = false;
+  }, [values.email, values.firstName, values.lastName, values.phoneNumber]);
+
+  useEffect(() => {
+    // Require minimum fields before considering it an abandoned cart
+    const hasMinFields =
+      values.firstName.trim() &&
+      values.lastName.trim() &&
+      values.email.trim() &&
+      values.phoneNumber.trim();
+
+    if (!hasMinFields || isSubmitting || savedRef.current) return;
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      savedRef.current = true;
+      saveAbandonedCart({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        phoneNumber: values.phoneNumber,
+        city: values.city || undefined,
+        streetAddress: values.streetAddress || undefined,
+        postalCode: values.postalCode || undefined,
+        country: values.country || undefined,
+        quantity: values.quantity ? Number(values.quantity) : undefined,
+        size: values.size || undefined,
+        price: values.price ? Number(values.price) : undefined,
+        shippingCost: values.shippingCost ? Number(values.shippingCost) : undefined,
+        selectedProductId: values.selectedProductId || undefined,
+      });
+    }, 5000);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [
+    values.firstName,
+    values.lastName,
+    values.email,
+    values.phoneNumber,
+    values.city,
+    values.streetAddress,
+    values.selectedProductId,
+    values.quantity,
+    values.size,
+    isSubmitting,
+  ]);
+
+  return null;
+}
 
 function parseExpiryDate(expiryDate: string) {
   const cleaned = String(expiryDate).replace(/\s+/g, "");
@@ -148,6 +209,10 @@ const MultiStepForm = () => {
           console.error("Failed to save order:", orderError);
         }
 
+        if (values.email) {
+          markCartConverted(values.email).catch(() => {});
+        }
+
         TagManager.dataLayer({
           dataLayer: {
             event: "payment_success",
@@ -178,8 +243,28 @@ const MultiStepForm = () => {
         return;
       }
 
-      toast.error(result.tranzila.message || "Payment failed");
-      navigate("/error");
+      const errorMessage = result.tranzila.message || "Payment failed";
+      toast.error(errorMessage);
+      navigate("/error", {
+        state: {
+          errorMessage,
+          userInfo: {
+            firstName: values.firstName,
+            lastName: values.lastName,
+            email: values.email,
+            phoneNumber: values.phoneNumber,
+            city: values.city,
+            streetAddress: values.streetAddress,
+            postalCode: values.postalCode,
+            country: values.country || "Israel",
+            quantity: unitsNumber,
+            size: values.size,
+            price: unitPrice,
+            totalAmount: totalWithShipping,
+            shippingCost: shippingCost,
+          },
+        },
+      });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Payment failed";
       toast.error(msg);
@@ -188,7 +273,28 @@ const MultiStepForm = () => {
           event: "payment_error",
         },
       });
-      navigate("/error");
+      const _unitPrice = Number(values.price);
+      const _shippingCost = Number(values.shippingCost) || 0;
+      navigate("/error", {
+        state: {
+          errorMessage: msg,
+          userInfo: {
+            firstName: values.firstName,
+            lastName: values.lastName,
+            email: values.email,
+            phoneNumber: values.phoneNumber,
+            city: values.city,
+            streetAddress: values.streetAddress,
+            postalCode: values.postalCode,
+            country: values.country || "Israel",
+            quantity: Number(values.quantity),
+            size: values.size,
+            price: _unitPrice,
+            totalAmount: _unitPrice + _shippingCost,
+            shippingCost: _shippingCost,
+          },
+        },
+      });
     } finally {
       setSubmitting(false);
     }
@@ -210,6 +316,7 @@ const MultiStepForm = () => {
         touched,
       }) => (
         <Form>
+          <CartAutoSave />
           <div className="grid 900:grid-cols-2 gap-10">
             <div className="bg-white p-5 rounded-md flex flex-col gap-y-10">
               <StepOne

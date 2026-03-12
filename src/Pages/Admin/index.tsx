@@ -7,11 +7,15 @@ import {
   Package,
   Users,
   TrendingUp,
+  AlertTriangle,
+  ShoppingCart,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import OrderDetailsModal from "./OrderDetailsModal";
 import { getGroupedOrders, getOrderStats } from "../../api/orders";
 import { verifyAdmin, logoutAdmin } from "../../api/admin";
+import { getFailedTransactions } from "../../api/failedTransactions";
+import { getAbandonedCarts } from "../../api/abandonedCarts";
 
 // Order Data Type from API
 interface OrderData {
@@ -44,15 +48,55 @@ interface OrderData {
   size: string;
 }
 
+interface FailedRecord {
+  _id: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
+  city?: string;
+  streetAddress?: string;
+  postalCode?: string;
+  country?: string;
+  quantity?: number;
+  size?: string;
+  price?: number;
+  totalAmount?: number;
+  shippingCost?: number;
+  errorMessage?: string;
+  createdAt: string;
+}
+
+interface AbandonedRecord {
+  _id: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
+  city?: string;
+  streetAddress?: string;
+  postalCode?: string;
+  country?: string;
+  quantity?: number;
+  size?: string;
+  price?: number;
+  shippingCost?: number;
+  selectedProductId?: number;
+  isConverted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+type ActiveTab = "orders" | "failed" | "abandoned";
+
 interface AdminDashboardProps {
   onLogout?: () => void;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
+  const [activeTab, setActiveTab] = useState<ActiveTab>("orders");
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateRange, setDateRange] = useState<"all" | "24h" | "7d" | "30d">(
-    "all",
-  );
+  const [dateRange, setDateRange] = useState<"all" | "24h" | "7d" | "30d">("all");
   const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [orders, setOrders] = useState<OrderData[]>([]);
@@ -62,6 +106,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const [limit] = useState(20);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  // Failed transactions state
+  const [failedRecords, setFailedRecords] = useState<FailedRecord[]>([]);
+  const [failedTotal, setFailedTotal] = useState(0);
+  const [failedPage, setFailedPage] = useState(1);
+  const [failedLoading, setFailedLoading] = useState(false);
+
+  // Abandoned carts state
+  const [abandonedRecords, setAbandonedRecords] = useState<AbandonedRecord[]>([]);
+  const [abandonedTotal, setAbandonedTotal] = useState(0);
+  const [abandonedPage, setAbandonedPage] = useState(1);
+  const [abandonedLoading, setAbandonedLoading] = useState(false);
 
   // Statistics state
   const [stats, setStats] = useState({
@@ -94,10 +150,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     }
   };
 
-  // Fetch orders from API
+  // Fetch orders
   useEffect(() => {
-    fetchOrders();
-  }, [currentPage, searchTerm, dateRange]);
+    if (activeTab === "orders") fetchOrders();
+  }, [currentPage, searchTerm, dateRange, activeTab]);
+
+  // Fetch failed transactions
+  useEffect(() => {
+    if (activeTab === "failed") fetchFailed();
+  }, [failedPage, searchTerm, dateRange, activeTab]);
+
+  // Fetch abandoned carts
+  useEffect(() => {
+    if (activeTab === "abandoned") fetchAbandoned();
+  }, [abandonedPage, searchTerm, dateRange, activeTab]);
+
+  // Reset page and search on tab change
+  useEffect(() => {
+    setSearchTerm("");
+    setCurrentPage(1);
+    setFailedPage(1);
+    setAbandonedPage(1);
+  }, [activeTab]);
 
   const fetchOrders = async () => {
     try {
@@ -118,9 +192,50 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     }
   };
 
+  const fetchFailed = async () => {
+    try {
+      setFailedLoading(true);
+      const skip = (failedPage - 1) * limit;
+      const response = await getFailedTransactions({
+        search: searchTerm || undefined,
+        dateRange,
+        limit,
+        skip,
+      });
+      setFailedRecords(response.records as FailedRecord[]);
+      setFailedTotal(response.total);
+    } catch (error) {
+      console.error("Failed to fetch failed transactions:", error);
+    } finally {
+      setFailedLoading(false);
+    }
+  };
+
+  const fetchAbandoned = async () => {
+    try {
+      setAbandonedLoading(true);
+      const skip = (abandonedPage - 1) * limit;
+      const response = await getAbandonedCarts({
+        search: searchTerm || undefined,
+        dateRange,
+        limit,
+        skip,
+      });
+      setAbandonedRecords(response.records as AbandonedRecord[]);
+      setAbandonedTotal(response.total);
+    } catch (error) {
+      console.error("Failed to fetch abandoned carts:", error);
+    } finally {
+      setAbandonedLoading(false);
+    }
+  };
+
   const totalPages = Math.ceil(total / limit);
   const hasNextPage = currentPage < totalPages;
   const hasPrevPage = currentPage > 1;
+
+  const failedTotalPages = Math.ceil(failedTotal / limit);
+  const abandonedTotalPages = Math.ceil(abandonedTotal / limit);
 
   const handleLogout = async () => {
     try {
@@ -129,7 +244,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
-      // Still redirect even if logout fails
       navigate("/login");
     }
   };
@@ -184,7 +298,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       order.paymentStatus,
     ]);
 
-    // Add BOM for Hebrew support in Excel
     const BOM = "\uFEFF";
     const csvContent =
       BOM +
@@ -234,6 +347,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         return status;
     }
   };
+
+  const tabClass = (tab: ActiveTab) =>
+    `px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
+      activeTab === tab
+        ? "border-[#C73126] text-[#C73126] bg-white"
+        : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+    }`;
 
   return (
     <div className="min-h-screen bg-gray-100 font-sans" dir="rtl">
@@ -301,11 +421,46 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           </div>
         </div>
 
+        {/* Tabs */}
+        <div className="flex gap-1 mb-0 border-b border-gray-200">
+          <button
+            className={tabClass("orders")}
+            onClick={() => setActiveTab("orders")}
+          >
+            <span className="flex items-center gap-2">
+              <Package size={16} />
+              הזמנות אחרונות
+            </span>
+          </button>
+          <button
+            className={tabClass("failed")}
+            onClick={() => setActiveTab("failed")}
+          >
+            <span className="flex items-center gap-2">
+              <AlertTriangle size={16} />
+              תשלומים שנכשלו
+            </span>
+          </button>
+          <button
+            className={tabClass("abandoned")}
+            onClick={() => setActiveTab("abandoned")}
+          >
+            <span className="flex items-center gap-2">
+              <ShoppingCart size={16} />
+              עגלות נטושות
+            </span>
+          </button>
+        </div>
+
         {/* Main Content Area */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          {/* Toolbar - Filter button removed */}
+        <div className="bg-white rounded-b-xl rounded-tl-xl shadow-sm border border-gray-200 overflow-hidden">
+          {/* Toolbar */}
           <div className="p-6 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h2 className="text-lg font-bold text-gray-900">הזמנות אחרונות</h2>
+            <h2 className="text-lg font-bold text-gray-900">
+              {activeTab === "orders" && "הזמנות אחרונות"}
+              {activeTab === "failed" && "תשלומים שנכשלו"}
+              {activeTab === "abandoned" && "עגלות נטושות"}
+            </h2>
 
             <div className="flex gap-3 flex-wrap">
               <div className="relative">
@@ -325,6 +480,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                 value={dateRange}
                 onChange={(e) => {
                   setCurrentPage(1);
+                  setFailedPage(1);
+                  setAbandonedPage(1);
                   setDateRange(e.target.value as "all" | "24h" | "7d" | "30d");
                 }}
                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#C73126] focus:border-transparent outline-none"
@@ -334,230 +491,250 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                 <option value="7d">7 ימים אחרונים</option>
                 <option value="30d">30 ימים אחרונים</option>
               </select>
-              <button
-                onClick={handleExportCSV}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
-              >
-                <Download size={16} />
-                ייצוא CSV
-              </button>
+              {activeTab === "orders" && (
+                <button
+                  onClick={handleExportCSV}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
+                >
+                  <Download size={16} />
+                  ייצוא CSV
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-right">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    מזהה
-                  </th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    לקוח
-                  </th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    פרטי מוצר
-                  </th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    סכום
-                  </th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    סטטוס
-                  </th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    פעולות
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {loading ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-12 text-center text-gray-500"
-                    >
-                      טוען הזמנות...
-                    </td>
-                  </tr>
-                ) : orders.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-12 text-center text-gray-500"
-                    >
-                      לא נמצאו הזמנות
-                    </td>
-                  </tr>
-                ) : (
-                  orders.map((order) => (
-                    <React.Fragment key={order._id}>
-                      <tr
-                        className="hover:bg-gray-50 transition-colors cursor-pointer"
-                        onClick={() =>
-                          setExpandedOrderId(
-                            expandedOrderId === order._id ? null : order._id,
-                          )
-                        }
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          #{order.transactionId}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-bold text-gray-900">
-                            {order.firstName} {order.lastName}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {order.email}
-                          </div>
-                          <div className="text-xs text-gray-400 mt-1">
-                            {order.phoneNumber}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900 font-semibold">
-                            רכישה ראשית ({order.quantity} יח')
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            סכום: ₪{order.totalAmount}
-                          </div>
-                          {order.relatedOrders &&
-                            order.relatedOrders.length > 0 && (
-                              <div className="text-xs text-blue-600 mt-1 font-medium">
-                                + {order.relatedOrders.length} שדרוג
-                                {order.relatedOrders.length > 1 ? "ים" : ""}
-                              </div>
-                            )}
-                          <div className="text-xs text-gray-400">
-                            {order.city}, {order.streetAddress}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
-                          ₪{order.consolidatedTotalAmount || order.totalAmount}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full border ${getStatusColor(order.paymentStatus)}`}
+          {/* Orders Tab */}
+          {activeTab === "orders" && (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-right">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">מזהה</th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">לקוח</th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">פרטי מוצר</th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">סכום</th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">סטטוס</th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">פעולות</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {loading ? (
+                      <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-500">טוען הזמנות...</td></tr>
+                    ) : orders.length === 0 ? (
+                      <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-500">לא נמצאו הזמנות</td></tr>
+                    ) : (
+                      orders.map((order) => (
+                        <React.Fragment key={order._id}>
+                          <tr
+                            className="hover:bg-gray-50 transition-colors cursor-pointer"
+                            onClick={() => setExpandedOrderId(expandedOrderId === order._id ? null : order._id)}
                           >
-                            {getStatusText(order.paymentStatus)}
-                          </span>
-                        </td>
-                        <td
-                          className="px-6 py-4 whitespace-nowrap text-sm font-medium"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleViewDetails(order)}
-                              className="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-lg hover:bg-blue-100 transition-colors"
-                              title="צפה בפרטים"
-                            >
-                              <Eye size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      {expandedOrderId === order._id &&
-                        order.relatedOrders &&
-                        order.relatedOrders.length > 0 && (
-                          <tr className="bg-blue-50">
-                            <td colSpan={6} className="px-6 py-4">
-                              <div className="space-y-2">
-                                <div className="text-sm font-semibold text-gray-700 mb-3">
-                                  פירוט שדרוגים:
-                                </div>
-                                {order.relatedOrders.map((relatedOrder) => (
-                                  <div
-                                    key={relatedOrder._id}
-                                    className="bg-white p-3 rounded-lg border border-blue-200"
-                                  >
-                                    <div className="flex justify-between items-start">
-                                      <div>
-                                        <div className="text-sm font-medium text-gray-900">
-                                          {relatedOrder.isUpsell
-                                            ? "✨ שדרוג"
-                                            : "📦 הצעה נוספת"}{" "}
-                                          ({relatedOrder.quantity} יח')
-                                        </div>
-                                        <div className="text-xs text-gray-500 mt-1">
-                                          מזהה עסקה: #
-                                          {relatedOrder.transactionId}
-                                        </div>
-                                        <div className="text-xs text-gray-400 mt-1">
-                                          {new Date(
-                                            relatedOrder.createdAt,
-                                          ).toLocaleString("he-IL")}
-                                        </div>
-                                      </div>
-                                      <div className="text-left">
-                                        <div className="text-sm font-bold text-green-600">
-                                          ₪{relatedOrder.totalAmount}
-                                        </div>
-                                        <span
-                                          className={`px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full border mt-1 ${getStatusColor(relatedOrder.paymentStatus)}`}
-                                        >
-                                          {getStatusText(
-                                            relatedOrder.paymentStatus,
-                                          )}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                                <div className="border-t border-blue-200 pt-3 mt-3">
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-sm font-semibold text-gray-700">
-                                      סה"כ כולל שדרוגים:
-                                    </span>
-                                    <span className="text-lg font-bold text-green-600">
-                                      ₪{order.consolidatedTotalAmount}
-                                    </span>
-                                  </div>
-                                  <div className="flex justify-between items-center mt-1">
-                                    <span className="text-xs text-gray-500">
-                                      סה"כ יחידות:
-                                    </span>
-                                    <span className="text-sm font-medium text-gray-700">
-                                      {order.consolidatedTotalQuantity} יח'
-                                    </span>
-                                  </div>
-                                </div>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{order.transactionId}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-bold text-gray-900">{order.firstName} {order.lastName}</div>
+                              <div className="text-sm text-gray-500">{order.email}</div>
+                              <div className="text-xs text-gray-400 mt-1">{order.phoneNumber}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="text-sm text-gray-900 font-semibold">רכישה ראשית ({order.quantity} יח')</div>
+                              <div className="text-sm text-gray-500">סכום: ₪{order.totalAmount}</div>
+                              {order.relatedOrders && order.relatedOrders.length > 0 && (
+                                <div className="text-xs text-blue-600 mt-1 font-medium">+ {order.relatedOrders.length} שדרוג{order.relatedOrders.length > 1 ? "ים" : ""}</div>
+                              )}
+                              <div className="text-xs text-gray-400">{order.city}, {order.streetAddress}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">₪{order.consolidatedTotalAmount || order.totalAmount}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full border ${getStatusColor(order.paymentStatus)}`}>
+                                {getStatusText(order.paymentStatus)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleViewDetails(order)}
+                                  className="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-lg hover:bg-blue-100 transition-colors"
+                                  title="צפה בפרטים"
+                                >
+                                  <Eye size={18} />
+                                </button>
                               </div>
                             </td>
                           </tr>
-                        )}
-                    </React.Fragment>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                          {expandedOrderId === order._id && order.relatedOrders && order.relatedOrders.length > 0 && (
+                            <tr className="bg-blue-50">
+                              <td colSpan={6} className="px-6 py-4">
+                                <div className="space-y-2">
+                                  <div className="text-sm font-semibold text-gray-700 mb-3">פירוט שדרוגים:</div>
+                                  {order.relatedOrders.map((relatedOrder) => (
+                                    <div key={relatedOrder._id} className="bg-white p-3 rounded-lg border border-blue-200">
+                                      <div className="flex justify-between items-start">
+                                        <div>
+                                          <div className="text-sm font-medium text-gray-900">
+                                            {relatedOrder.isUpsell ? "✨ שדרוג" : "📦 הצעה נוספת"} ({relatedOrder.quantity} יח')
+                                          </div>
+                                          <div className="text-xs text-gray-500 mt-1">מזהה עסקה: #{relatedOrder.transactionId}</div>
+                                          <div className="text-xs text-gray-400 mt-1">{new Date(relatedOrder.createdAt).toLocaleString("he-IL")}</div>
+                                        </div>
+                                        <div className="text-left">
+                                          <div className="text-sm font-bold text-green-600">₪{relatedOrder.totalAmount}</div>
+                                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full border mt-1 ${getStatusColor(relatedOrder.paymentStatus)}`}>
+                                            {getStatusText(relatedOrder.paymentStatus)}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                  <div className="border-t border-blue-200 pt-3 mt-3">
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-sm font-semibold text-gray-700">סה"כ כולל שדרוגים:</span>
+                                      <span className="text-lg font-bold text-green-600">₪{order.consolidatedTotalAmount}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center mt-1">
+                                      <span className="text-xs text-gray-500">סה"כ יחידות:</span>
+                                      <span className="text-sm font-medium text-gray-700">{order.consolidatedTotalQuantity} יח'</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {/* Pagination */}
+              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                <span className="text-sm text-gray-500">
+                  מציג {(currentPage - 1) * limit + 1}-{Math.min(currentPage * limit, total)} מתוך {total} תוצאות
+                </span>
+                <div className="flex gap-2 items-center">
+                  <button onClick={() => setCurrentPage(currentPage - 1)} className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled={!hasPrevPage}>הקודם</button>
+                  <span className="text-sm text-gray-600">עמוד {currentPage} מתוך {totalPages || 1}</span>
+                  <button onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled={!hasNextPage}>הבא</button>
+                </div>
+              </div>
+            </>
+          )}
 
-          {/* Pagination */}
-          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-            <span className="text-sm text-gray-500">
-              מציג {(currentPage - 1) * limit + 1}-
-              {Math.min(currentPage * limit, total)} מתוך {total} תוצאות
-            </span>
-            <div className="flex gap-2 items-center">
-              <button
-                onClick={() => setCurrentPage(currentPage - 1)}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!hasPrevPage}
-              >
-                הקודם
-              </button>
-              <span className="text-sm text-gray-600">
-                עמוד {currentPage} מתוך {totalPages || 1}
-              </span>
-              <button
-                onClick={() => setCurrentPage(currentPage + 1)}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!hasNextPage}
-              >
-                הבא
-              </button>
-            </div>
-          </div>
+          {/* Failed Transactions Tab */}
+          {activeTab === "failed" && (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-right">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">תאריך</th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">לקוח</th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">פרטי הזמנה</th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">סכום</th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">סיבת כשלון</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {failedLoading ? (
+                      <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">טוען...</td></tr>
+                    ) : failedRecords.length === 0 ? (
+                      <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">לא נמצאו תשלומים שנכשלו</td></tr>
+                    ) : (
+                      failedRecords.map((r) => (
+                        <tr key={r._id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(r.createdAt).toLocaleString("he-IL")}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-bold text-gray-900">{r.firstName} {r.lastName}</div>
+                            <div className="text-sm text-gray-500">{r.email}</div>
+                            <div className="text-xs text-gray-400 mt-1">{r.phoneNumber}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-700">{r.quantity} יח' — מידה: {r.size}</div>
+                            <div className="text-xs text-gray-400">{r.city}, {r.streetAddress}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-red-500">
+                            {r.totalAmount ? `₪${r.totalAmount}` : "—"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-red-600 max-w-xs">
+                            <span className="bg-red-50 px-2 py-1 rounded text-xs">{r.errorMessage || "לא צוין"}</span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {/* Pagination */}
+              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                <span className="text-sm text-gray-500">סה"כ {failedTotal} רשומות</span>
+                <div className="flex gap-2 items-center">
+                  <button onClick={() => setFailedPage(failedPage - 1)} className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled={failedPage <= 1}>הקודם</button>
+                  <span className="text-sm text-gray-600">עמוד {failedPage} מתוך {failedTotalPages || 1}</span>
+                  <button onClick={() => setFailedPage(failedPage + 1)} className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled={failedPage >= failedTotalPages}>הבא</button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Abandoned Carts Tab */}
+          {activeTab === "abandoned" && (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-right">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">עדכון אחרון</th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">לקוח</th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">פרטי עגלה</th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">סכום משוער</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {abandonedLoading ? (
+                      <tr><td colSpan={4} className="px-6 py-12 text-center text-gray-500">טוען...</td></tr>
+                    ) : abandonedRecords.length === 0 ? (
+                      <tr><td colSpan={4} className="px-6 py-12 text-center text-gray-500">לא נמצאו עגלות נטושות</td></tr>
+                    ) : (
+                      abandonedRecords.map((r) => (
+                        <tr key={r._id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(r.updatedAt).toLocaleString("he-IL")}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-bold text-gray-900">{r.firstName} {r.lastName}</div>
+                            <div className="text-sm text-gray-500">{r.email}</div>
+                            <div className="text-xs text-gray-400 mt-1">{r.phoneNumber}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-700">
+                              {r.quantity ? `${r.quantity} יח'` : "—"}{r.size ? ` — מידה: ${r.size}` : ""}
+                            </div>
+                            {r.city && <div className="text-xs text-gray-400">{r.city}{r.streetAddress ? `, ${r.streetAddress}` : ""}</div>}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-orange-500">
+                            {r.price
+                              ? `₪${(Number(r.price) + Number(r.shippingCost || 0))}`
+                              : "—"}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {/* Pagination */}
+              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                <span className="text-sm text-gray-500">סה"כ {abandonedTotal} עגלות</span>
+                <div className="flex gap-2 items-center">
+                  <button onClick={() => setAbandonedPage(abandonedPage - 1)} className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled={abandonedPage <= 1}>הקודם</button>
+                  <span className="text-sm text-gray-600">עמוד {abandonedPage} מתוך {abandonedTotalPages || 1}</span>
+                  <button onClick={() => setAbandonedPage(abandonedPage + 1)} className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled={abandonedPage >= abandonedTotalPages}>הבא</button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </main>
 
