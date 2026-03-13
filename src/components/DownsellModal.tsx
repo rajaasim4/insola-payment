@@ -223,14 +223,14 @@ export const DownsellModal = ({
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel
-                  className="w-full max-w-[480px] transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all relative"
+                  className="w-full max-w-120 transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all relative"
                   dir="rtl"
                 >
                   {/* Close Button */}
                   {showClose && (
                     <button
                       onClick={onClose}
-                      className="absolute top-3 left-3 z-[100] w-8 h-8 rounded-full bg-black/30 text-white flex items-center justify-center hover:bg-black/50 transition-colors"
+                      className="absolute top-3 left-3 z-100 w-8 h-8 rounded-full bg-black/30 text-white flex items-center justify-center hover:bg-black/50 transition-colors"
                     >
                       <VscChromeClose className="w-4 h-4" />
                     </button>
@@ -242,7 +242,7 @@ export const DownsellModal = ({
                   </div>
 
                   {/* Top Banner - Orange for Downsell */}
-                  <div className="bg-gradient-to-r from-orange-600 to-orange-400 px-5 pt-5 pb-4 text-center text-white">
+                  <div className="bg-linear-to-r from-orange-600 to-orange-400 px-5 pt-5 pb-4 text-center text-white">
                     <div className="inline-flex items-center gap-1.5 bg-white/20 rounded-full px-3.5 py-1 text-xs font-semibold mb-2">
                       ⚠️ רגע לפני שעוזבים!
                     </div>
@@ -255,7 +255,7 @@ export const DownsellModal = ({
                   </div>
 
                   {/* Social Proof */}
-                  <div className="flex items-center justify-center gap-2 bg-green-50 border-b border-green-200 py-2 px-4 text-xs font-semibold text-green-700 min-h-[38px]">
+                  <div className="flex items-center justify-center gap-2 bg-green-50 border-b border-green-200 py-2 px-4 text-xs font-semibold text-green-700 min-h-9.5">
                     <div className="flex">
                       {[1, 2, 3].map((i) => (
                         <span
@@ -276,7 +276,7 @@ export const DownsellModal = ({
                       <img
                         src="/images/insola-product.png"
                         alt="מדרסי Insola"
-                        className="max-w-[180px] w-full mx-auto rounded-xl"
+                        className="max-w-45 w-full mx-auto rounded-xl"
                       />
                     </div>
 
@@ -287,7 +287,7 @@ export const DownsellModal = ({
                     </div>
 
                     {/* Savings Hero - Orange for Downsell */}
-                    <div className="relative bg-gradient-to-b from-orange-50 to-orange-100 border-2 border-orange-400 rounded-xl p-5 pt-6 text-center mb-5">
+                    <div className="relative bg-linear-to-b from-orange-50 to-orange-100 border-2 border-orange-400 rounded-xl p-5 pt-6 text-center mb-5">
                       <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-xs font-extrabold py-1 px-4 rounded-full whitespace-nowrap">
                         🎁 הצעת בזק: הצעה אחרונה
                       </span>
@@ -366,7 +366,7 @@ export const DownsellModal = ({
                     <button
                       onClick={handleAccept}
                       disabled={isProcessing}
-                      className="w-full bg-gradient-to-b from-orange-400 to-orange-600 text-white border-none rounded-xl py-4 px-5 text-lg font-black cursor-pointer shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all relative overflow-hidden disabled:opacity-50 disabled:hover:translate-y-0"
+                      className="w-full bg-linear-to-b from-orange-400 to-orange-600 text-white border-none rounded-xl py-4 px-5 text-lg font-black cursor-pointer shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all relative overflow-hidden disabled:opacity-50 disabled:hover:translate-y-0"
                     >
                       <span className="block">
                         ✓ כן! תוסיף לי {addPairs}{" "}
