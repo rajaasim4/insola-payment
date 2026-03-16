@@ -2,14 +2,6 @@ import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import type { FormValues } from "./types";
 
-// Sensitive fields that should NEVER be stored in localStorage
-interface SensitiveFormData {
-  cardNumber: string;
-  cvv: string;
-  expiryDate: string;
-}
-
-// Non-sensitive fields that can be persisted
 interface PersistentFormData {
   selectedProductId: number;
   size: string;
@@ -28,10 +20,8 @@ interface PersistentFormData {
   shippingCost: string;
   price: string;
   quantity: string;
-  // termsAccepted: boolean;
 }
 
-// Persistent atom (localStorage) - NO sensitive data
 export const persistentFormAtom = atomWithStorage<PersistentFormData>(
   "orderForm",
   {
@@ -52,57 +42,17 @@ export const persistentFormAtom = atomWithStorage<PersistentFormData>(
     shippingCost: "15",
     price: "299.00",
     quantity: "4",
-    // termsAccepted: false,
   },
 );
 
-// Memory-only atom (resets on refresh) - sensitive data only
-export const sensitiveFormAtom = atom<SensitiveFormData>({
-  cardNumber: "",
-  cvv: "",
-  expiryDate: "",
-});
-
-// Combined atom for reading full form data
+// Combined atom — card data no longer stored (handled by Tranzila Hosted Fields)
 export const orderFormAtom = atom(
-  (get) => {
-    const persistent = get(persistentFormAtom);
-    const sensitive = get(sensitiveFormAtom);
-    return { ...persistent, ...sensitive } as FormValues;
-  },
+  (get) => get(persistentFormAtom) as FormValues,
   (get, set, update: Partial<FormValues>) => {
-    const persistent = get(persistentFormAtom);
-    const sensitive = get(sensitiveFormAtom);
-
-    // Split update into persistent and sensitive
-    const persistentUpdate: Partial<PersistentFormData> = {};
-    const sensitiveUpdate: Partial<SensitiveFormData> = {};
-
-    (Object.keys(update) as Array<keyof FormValues>).forEach((key) => {
-      if (key === "cardNumber" || key === "cvv" || key === "expiryDate") {
-        (sensitiveUpdate as any)[key] = update[key];
-      } else {
-        (persistentUpdate as any)[key] = update[key];
-      }
-    });
-
-    if (Object.keys(persistentUpdate).length > 0) {
-      set(persistentFormAtom, { ...persistent, ...persistentUpdate });
-    }
-    if (Object.keys(sensitiveUpdate).length > 0) {
-      set(sensitiveFormAtom, { ...sensitive, ...sensitiveUpdate });
-    }
+    const prev = get(persistentFormAtom);
+    set(persistentFormAtom, { ...prev, ...update });
   },
 );
-
-// Clear sensitive data atom
-export const clearSensitiveDataAtom = atom(null, (_, set) => {
-  set(sensitiveFormAtom, {
-    cardNumber: "",
-    cvv: "",
-    expiryDate: "",
-  });
-});
 
 export const formValidationAtom = atom((get) => {
   const form = get(orderFormAtom);

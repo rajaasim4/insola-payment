@@ -45,6 +45,7 @@ export async function createOrder(payload: CreateOrderPayload) {
   });
 
   const data = await res.json();
+  // console.log(datawh)
   if (!res.ok) throw new Error(data.message || "Failed to save order");
   return data;
 }

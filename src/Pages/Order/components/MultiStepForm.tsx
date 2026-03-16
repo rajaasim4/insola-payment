@@ -3,12 +3,10 @@ import StepTwo from "../components/StepTwo";
 import StepThree from "../components/StepThree";
 import { Formik, Form, type FormikHelpers, useFormikContext } from "formik";
 import { useAtom } from "jotai";
-import { orderFormAtom, clearSensitiveDataAtom } from "../../../store";
+import { orderFormAtom } from "../../../store";
 import StepFour from "../components/StepFour";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { createCreditCardTransaction } from "../../../api/backend";
-import { encryptCard } from "../../../utils/encryptCard";
 import { createOrder } from "../../../api/orders";
 import { validationSchema } from "../../../utils/schema/validationSchema";
 import type { FormValues } from "../../../types";
@@ -16,19 +14,25 @@ import { v4 as uuidv4 } from "uuid";
 import TagManager from "react-gtm-module";
 import { useEffect, useRef } from "react";
 import { saveAbandonedCart, markCartConverted } from "../../../api/abandonedCarts";
+import { saveFailedTransaction } from "../../../api/failedTransactions";
 
+declare global {
+  interface Window {
+    TzlaHostedFields: any;
+  }
+}
+
+// Auto-save abandoned cart after user fills key fields and stops for 5 sec
 function CartAutoSave() {
   const { values, isSubmitting } = useFormikContext<FormValues>();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedRef = useRef(false);
 
-  // Reset saved flag when key fields change (user edited again)
   useEffect(() => {
     savedRef.current = false;
   }, [values.email, values.firstName, values.lastName, values.phoneNumber]);
 
   useEffect(() => {
-    // Require minimum fields before considering it an abandoned cart
     const hasMinFields =
       values.firstName.trim() &&
       values.lastName.trim() &&
@@ -76,33 +80,22 @@ function CartAutoSave() {
   return null;
 }
 
-function parseExpiryDate(expiryDate: string) {
-  const cleaned = String(expiryDate).replace(/\s+/g, "");
-  const [mmRaw, yyRaw] = cleaned.split("/");
-
-  const expire_month = Number(mmRaw);
-  const yy = String(yyRaw ?? "");
-  const expire_year = yy.length === 2 ? Number(`20${yy}`) : Number(yy);
-
-  if (!Number.isFinite(expire_month) || expire_month < 1 || expire_month > 12) {
-    return null;
-  }
-
-  if (
-    !Number.isFinite(expire_year) ||
-    expire_year < 2000 ||
-    expire_year > 2100
-  ) {
-    return null;
-  }
-
-  return { expire_month, expire_year };
+function chargeHostedFields(
+  fields: any,
+  params: Record<string, any>,
+): Promise<{ err: any; response: any }> {
+  return new Promise((resolve) => {
+    fields.charge(params, (err: any, response: any) => {
+      resolve({ err, response });
+    });
+  });
 }
 
 const MultiStepForm = () => {
   const [formData, setFormData] = useAtom(orderFormAtom);
-  const [, clearSensitive] = useAtom(clearSensitiveDataAtom);
   const navigate = useNavigate();
+  const hostedFieldsRef = useRef<any>(null);
+  const terminalName = (import.meta as any).env?.VITE_TRANZILA_TERMINAL ?? "";
 
   const initialValues: FormValues = {
     selectedProductId: formData.selectedProductId || 4,
@@ -121,10 +114,59 @@ const MultiStepForm = () => {
     shippingCost: formData.shippingCost || "15",
     price: formData.price || "299.00",
     quantity: formData.quantity || "4",
-    cardNumber: formData.cardNumber || "",
-    cvv: formData.cvv || "",
-    expiryDate: formData.expiryDate || "",
   };
+
+  // Initialize Tranzila Hosted Fields after DOM renders
+  useEffect(() => {
+    const init = () => {
+      if (!window.TzlaHostedFields) return;
+      hostedFieldsRef.current = window.TzlaHostedFields.create({
+        sandbox: false,
+        terminal_name: terminalName,
+        fields: {
+          credit_card_number: {
+            selector: "#tzla-card-number",
+            placeholder: "4580 4580 4580 4580",
+            tabindex: 1,
+          },
+          cvv: {
+            selector: "#tzla-cvv",
+            placeholder: "123",
+            tabindex: 2,
+          },
+          expiry: {
+            selector: "#tzla-expiry",
+            placeholder: "12/26",
+            version: "1",
+          },
+        },
+        styles: {
+          input: {
+            "font-size": "14px",
+            "font-family": "inherit",
+            color: "#111827",
+            "line-height": "1.5",
+          },
+          select: {
+            "font-size": "14px",
+            "font-family": "inherit",
+          },
+        },
+      });
+    };
+
+    if (window.TzlaHostedFields) {
+      init();
+    } else {
+      const interval = setInterval(() => {
+        if (window.TzlaHostedFields) {
+          init();
+          clearInterval(interval);
+        }
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, []);
 
   const handleSubmit = async (
     values: FormValues,
@@ -133,148 +175,207 @@ const MultiStepForm = () => {
     try {
       setFormData(values);
 
-      const expiry = parseExpiryDate(values.expiryDate);
-      if (!expiry) {
-        toast.error("Invalid expiry date. Use MM/YY");
+      if (!hostedFieldsRef.current) {
+        toast.error("מערכת התשלום לא נטענה, אנא רענן את הדף");
         return;
       }
-      const { expire_month, expire_year } = expiry;
 
       const unitPrice = Number(values.price);
       const unitsNumber = Number(values.quantity);
       const shippingCost = Number(values.shippingCost) || 0;
       const totalWithShipping = unitPrice + shippingCost;
 
-      const client: Record<string, string> = {};
-      const fullName = `${values.firstName} ${values.lastName}`.trim();
-      if (fullName) client.name = fullName;
-      if (values.email) client.email = values.email;
-      if (values.phoneNumber) client.phone_number = values.phoneNumber;
-      if (values.city) client.city = values.city;
-      if (values.streetAddress) client.address_line_1 = values.streetAddress;
-      if (values.postalCode) client.zip = values.postalCode;
+      // 1. Get handshake token from our backend
+      const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL ?? "";
 
-      const encrypted_card = await encryptCard({
-        card_number: values.cardNumber.replace(/\s+/g, ""),
-        cvv: values.cvv,
-        expire_month,
-        expire_year,
+      const handshakeRes = await fetch(`${baseUrl}/api/handshake`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: totalWithShipping }),
       });
 
-      const result = await createCreditCardTransaction({
-        txn_type: "debit",
-        encrypted_card,
-        items: [
-          {
-            name: "Insola Order",
-            type: "I",
-            unit_price: totalWithShipping,
-            units_number: 1,
-          },
-        ],
-        client: Object.keys(client).length ? (client as any) : undefined,
-      });
+      if (!handshakeRes.ok) {
+        const errData = await handshakeRes.json().catch(() => ({}));
+        throw new Error((errData as any).message || "שגיאה באתחול התשלום");
+      }
 
-      if (result.tranzila.error_code === 0) {
-        clearSensitive();
+      const { thtk } = await handshakeRes.json();
 
-        const orderId = uuidv4();
-        const transactionId = result.stored_transaction_id || orderId;
+      // 2. Charge via Hosted Fields (card data stays in Tranzila iframes)
+      const { err, response } = await chargeHostedFields(
+        hostedFieldsRef.current,
+        {
+          terminal_name: terminalName,
+          amount: totalWithShipping,
+          thtk,
+          tokenize: true,
+          contact: `${values.firstName} ${values.lastName}`.trim(),
+          email: values.email || undefined,
+          address: values.streetAddress || undefined,
+          city: values.city || undefined,
+          response_language: "hebrew",
+        },
+      );
 
-        try {
-          await createOrder({
-            firstName: values.firstName,
-            lastName: values.lastName,
-            email: values.email,
-            phoneNumber: values.phoneNumber,
-            city: values.city,
-            streetAddress: values.streetAddress,
-            postalCode: values.postalCode,
-            country: values.country || "Israel",
-            quantity: unitsNumber,
-            size: values.size,
-            price: unitPrice,
+      // 3. Handle errors from Hosted Fields
+      if (err) {
+        const msgs = err.messages as Array<{ param: string; message: string }>;
+        const msg = msgs?.[0]?.message || "שגיאה בפרטי כרטיס האשראי";
+        const errEl = document.getElementById("tzla-card-errors");
+        if (errEl) errEl.textContent = msg;
+        toast.error(msg);
+        return;
+      }
 
-            totalAmount: totalWithShipping,
-            shippingCost: shippingCost,
-            transactionId: transactionId,
-            paymentStatus: "success",
-            orderSource: "main_checkout",
-            isUpsell: false,
-            isDownsell: false,
-            marketingEmails: values.marketingEmails,
-            marketingSMS: values.marketingSMS,
-          });
-        } catch (orderError) {
-          console.error("Failed to save order:", orderError);
-        }
+      const txnResponse = response?.transaction_response;
 
-        if (values.email) {
-          markCartConverted(values.email).catch(() => {});
-        }
-
-        TagManager.dataLayer({
-          dataLayer: {
-            event: "payment_success",
-          },
-        });
-
-        navigate("/success", {
+      if (!txnResponse?.success) {
+        const errorMessage = txnResponse?.error || "התשלום נכשל";
+        toast.error(errorMessage);
+        saveFailedTransaction({
+          firstName: values.firstName,
+          lastName: values.lastName,
+          email: values.email,
+          phoneNumber: values.phoneNumber,
+          city: values.city,
+          streetAddress: values.streetAddress,
+          postalCode: values.postalCode,
+          country: values.country || "Israel",
+          quantity: unitsNumber,
+          size: values.size,
+          price: unitPrice,
+          totalAmount: totalWithShipping,
+          shippingCost,
+          errorMessage,
+        }).catch(() => {});
+        navigate("/error", {
           state: {
-            orderId,
-            quantity: unitsNumber,
-            price: totalWithShipping,
-            initialTransactionId: transactionId,
+            errorMessage,
             userInfo: {
               firstName: values.firstName,
               lastName: values.lastName,
               email: values.email,
               phoneNumber: values.phoneNumber,
               city: values.city,
-              size: values.size,
               streetAddress: values.streetAddress,
               postalCode: values.postalCode,
               country: values.country || "Israel",
-              marketingEmails: values.marketingEmails,
-              marketingSMS: values.marketingSMS,
+              quantity: unitsNumber,
+              size: values.size,
+              price: unitPrice,
+              totalAmount: totalWithShipping,
+              shippingCost,
             },
           },
         });
         return;
       }
 
-      const errorMessage = result.tranzila.message || "Payment failed";
-      toast.error(errorMessage);
-      navigate("/error", {
+      // 4. Success — clear card error display
+      const errEl = document.getElementById("tzla-card-errors");
+      if (errEl) errEl.textContent = "";
+
+      const orderId = uuidv4();
+      const transactionId = String(txnResponse.transaction_id || orderId);
+
+      // 5. Save token to backend so upsell (pay-with-saved) works
+      const token = txnResponse.token;
+      const expireMonth = txnResponse.expiry_month;
+      const expireYear = txnResponse.expiry_year;
+      if (token) {
+        fetch(`${baseUrl}/api/transactions/credit-card/save-token`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token,
+            expire_month: expireMonth ? Number(expireMonth) : undefined,
+            expire_year: expireYear ? Number(expireYear) : undefined,
+          }),
+        }).catch(() => {});
+      }
+
+      // 6. Save order to our backend
+      try {
+        await createOrder({
+          firstName: values.firstName,
+          lastName: values.lastName,
+          email: values.email,
+          phoneNumber: values.phoneNumber,
+          city: values.city,
+          streetAddress: values.streetAddress,
+          postalCode: values.postalCode,
+          country: values.country || "Israel",
+          quantity: unitsNumber,
+          size: values.size,
+          price: unitPrice,
+          totalAmount: totalWithShipping,
+          shippingCost,
+          transactionId,
+          paymentStatus: "success",
+          orderSource: "main_checkout",
+          isUpsell: false,
+          isDownsell: false,
+          marketingEmails: values.marketingEmails,
+          marketingSMS: values.marketingSMS,
+        });
+      } catch (orderError) {
+        console.error("Failed to save order:", orderError);
+      }
+
+      // 7. Mark abandoned cart as converted
+      if (values.email) {
+        markCartConverted(values.email).catch(() => {});
+      }
+
+      try { TagManager.dataLayer({ dataLayer: { event: "payment_success" } }); } catch {}
+
+      navigate("/success", {
         state: {
-          errorMessage,
+          orderId,
+          quantity: unitsNumber,
+          price: totalWithShipping,
+          initialTransactionId: transactionId,
           userInfo: {
             firstName: values.firstName,
             lastName: values.lastName,
             email: values.email,
             phoneNumber: values.phoneNumber,
             city: values.city,
+            size: values.size,
             streetAddress: values.streetAddress,
             postalCode: values.postalCode,
             country: values.country || "Israel",
-            quantity: unitsNumber,
-            size: values.size,
-            price: unitPrice,
-            totalAmount: totalWithShipping,
-            shippingCost: shippingCost,
+            marketingEmails: values.marketingEmails,
+            marketingSMS: values.marketingSMS,
           },
         },
       });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Payment failed";
+      const msg = e instanceof Error ? e.message : "שגיאה בתשלום";
       toast.error(msg);
-      TagManager.dataLayer({
-        dataLayer: {
-          event: "payment_error",
-        },
-      });
-      const _unitPrice = Number(values.price);
-      const _shippingCost = Number(values.shippingCost) || 0;
+      try { TagManager.dataLayer({ dataLayer: { event: "payment_error" } }); } catch {}
+
+      const unitPrice = Number(values.price);
+      const shippingCost = Number(values.shippingCost) || 0;
+
+      saveFailedTransaction({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        phoneNumber: values.phoneNumber,
+        city: values.city,
+        streetAddress: values.streetAddress,
+        postalCode: values.postalCode,
+        country: values.country || "Israel",
+        quantity: Number(values.quantity),
+        size: values.size,
+        price: unitPrice,
+        totalAmount: unitPrice + shippingCost,
+        shippingCost,
+        errorMessage: msg,
+      }).catch(() => {});
+
       navigate("/error", {
         state: {
           errorMessage: msg,
@@ -289,9 +390,9 @@ const MultiStepForm = () => {
             country: values.country || "Israel",
             quantity: Number(values.quantity),
             size: values.size,
-            price: _unitPrice,
-            totalAmount: _unitPrice + _shippingCost,
-            shippingCost: _shippingCost,
+            price: unitPrice,
+            totalAmount: unitPrice + shippingCost,
+            shippingCost,
           },
         },
       });

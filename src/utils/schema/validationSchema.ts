@@ -1,20 +1,4 @@
 import * as Yup from "yup";
-function luhnCheck(value: string) {
-  const digits = value.replace(/\D/g, "");
-  let sum = 0;
-  let shouldDouble = false;
-  for (let i = digits.length - 1; i >= 0; i -= 1) {
-    let digit = Number(digits[i]);
-    if (Number.isNaN(digit)) return false;
-    if (shouldDouble) {
-      digit *= 2;
-      if (digit > 9) digit -= 9;
-    }
-    sum += digit;
-    shouldDouble = !shouldDouble;
-  }
-  return digits.length >= 12 && sum % 10 === 0;
-}
 
 export const validationSchema = Yup.object({
   // Step 1
@@ -45,23 +29,6 @@ export const validationSchema = Yup.object({
     .matches(/^\d{3,10}$/, "מיקוד לא תקין"),
   shippingMethod: Yup.string(),
   shippingCost: Yup.string(),
-  // Step 4
-  cardNumber: Yup.string()
-    .required("נא להזין מספר כרטיס")
-    .test("card-number", "מספר כרטיס לא תקין", (value) => {
-      if (!value) return false;
-      const digits = value.replace(/\D/g, "");
-      // allow tranzila test card
-      if (digits === "55555444") return true;
-      if (digits.length < 12 || digits.length > 19) return false;
-      return luhnCheck(digits);
-    }),
-
-  cvv: Yup.string()
-    .required("נא להזין CVV")
-    .matches(/^\d{3,4}$/, "CVV לא תקין"),
-  expiryDate: Yup.string()
-    .required("נא להזין תוקף כרטיס")
-    .matches(/^(0[1-9]|1[0-2])\s*\/\s*(\d{2}|\d{4})$/, "תוקף לא תקין (MM/YY)"),
+  // Step 4: card fields handled by Tranzila Hosted Fields — no Yup validation needed
   // termsAccepted: Yup.boolean().oneOf([true], "נא לאשר את התנאים"),
 });

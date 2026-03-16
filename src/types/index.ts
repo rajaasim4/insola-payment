@@ -38,10 +38,7 @@ export interface FormValues {
   shippingMethod: string;
   shippingCost: string;
 
-  // Step 4: Payment
-  cardNumber: string;
-  cvv: string;
-  expiryDate: string;
+  // Step 4: Payment handled by Tranzila Hosted Fields (no card fields in form)
   // termsAccepted: boolean;
 }
 

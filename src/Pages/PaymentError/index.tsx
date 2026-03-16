@@ -1,37 +1,7 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import { IoIosCloseCircle } from "react-icons/io";
-import { useLocation } from "react-router-dom";
-import { saveFailedTransaction } from "../../api/failedTransactions";
 
 const PaymentError: React.FC = () => {
-  const location = useLocation();
-  const saved = useRef(false);
-
-  useEffect(() => {
-    if (saved.current) return;
-    saved.current = true;
-
-    const state = location.state as any;
-    if (state?.userInfo) {
-      saveFailedTransaction({
-        firstName: state.userInfo.firstName,
-        lastName: state.userInfo.lastName,
-        email: state.userInfo.email,
-        phoneNumber: state.userInfo.phoneNumber,
-        city: state.userInfo.city,
-        streetAddress: state.userInfo.streetAddress,
-        postalCode: state.userInfo.postalCode,
-        country: state.userInfo.country,
-        quantity: state.userInfo.quantity,
-        size: state.userInfo.size,
-        price: state.userInfo.price,
-        totalAmount: state.userInfo.totalAmount,
-        shippingCost: state.userInfo.shippingCost,
-        errorMessage: state.errorMessage,
-      });
-    }
-  }, []);
-
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg p-8 max-w-md w-full text-center space-y-6 shadow-lg">
