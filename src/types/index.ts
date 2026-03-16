@@ -38,8 +38,8 @@ export interface FormValues {
   shippingMethod: string;
   shippingCost: string;
 
-  // Step 4: Payment handled by Tranzila Hosted Fields (no card fields in form)
-  // termsAccepted: boolean;
+  // Step 4: ID number for Tranzila charge (card fields handled by Hosted Fields iframes)
+  idNumber: string;
 }
 
 export interface StepProps {

@@ -8,6 +8,10 @@ import type { FormValues } from "../../../types";
 const StepFour: React.FC = () => {
   const {
     values,
+    handleChange,
+    handleBlur,
+    errors,
+    touched,
     isSubmitting,
   }: FormikContextType<FormValues> = useFormikContext<FormValues>();
   const [, setFormData] = useAtom(orderFormAtom);
@@ -71,6 +75,27 @@ const StepFour: React.FC = () => {
 
       {/* Card error display */}
       <div id="tzla-card-errors" className="text-red-500 text-xs mb-3 text-right" />
+
+      {/* Israeli ID number */}
+      <div className="mb-4">
+        <label className="block text-right text-sm font-semibold mb-1">
+          מספר תעודת זהות
+        </label>
+        <input
+          type="text"
+          name="idNumber"
+          value={values.idNumber}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          placeholder="000000000"
+          maxLength={9}
+          dir="ltr"
+          className="w-full border border-gray-300 rounded px-3 py-2 text-right"
+        />
+        {touched.idNumber && errors.idNumber && (
+          <p className="text-red-500 text-xs mt-1 text-right">{errors.idNumber}</p>
+        )}
+      </div>
 
       {/* Security Badges */}
       <div className="flex my-5 gap-4 justify-center">
