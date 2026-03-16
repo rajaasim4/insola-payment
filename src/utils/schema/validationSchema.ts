@@ -29,6 +29,8 @@ export const validationSchema = Yup.object({
     .matches(/^\d{3,10}$/, "מיקוד לא תקין"),
   shippingMethod: Yup.string(),
   shippingCost: Yup.string(),
-  // Step 4: card fields handled by Tranzila Hosted Fields — no Yup validation needed
-  // termsAccepted: Yup.boolean().oneOf([true], "נא לאשר את התנאים"),
+  // Step 4
+  idNumber: Yup.string()
+    .required("נא להזין מספר תעודת זהות")
+    .matches(/^\d{9}$/, "מספר תעודת זהות לא תקין"),
 });

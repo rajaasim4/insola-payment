@@ -114,6 +114,7 @@ const MultiStepForm = () => {
     shippingCost: formData.shippingCost || "15",
     price: formData.price || "299.00",
     quantity: formData.quantity || "4",
+    idNumber: formData.idNumber || "",
   };
 
   // Initialize Tranzila Hosted Fields after DOM renders
@@ -209,6 +210,7 @@ const MultiStepForm = () => {
           amount: totalWithShipping,
           thtk,
           tokenize: true,
+          card_holder_id_number: values.idNumber,
           contact: `${values.firstName} ${values.lastName}`.trim(),
           email: values.email || undefined,
           address: values.streetAddress || undefined,
