@@ -20,6 +20,7 @@ interface PersistentFormData {
   shippingCost: string;
   price: string;
   quantity: string;
+  idNumber: string;
 }
 
 export const persistentFormAtom = atomWithStorage<PersistentFormData>(
@@ -42,6 +43,7 @@ export const persistentFormAtom = atomWithStorage<PersistentFormData>(
     shippingCost: "15",
     price: "299.00",
     quantity: "4",
+    idNumber: "",
   },
 );
 

@@ -95,7 +95,6 @@ const MultiStepForm = () => {
   const [formData, setFormData] = useAtom(orderFormAtom);
   const navigate = useNavigate();
   const hostedFieldsRef = useRef<any>(null);
-  const terminalName = (import.meta as any).env?.VITE_TRANZILA_TERMINAL ?? "";
 
   const initialValues: FormValues = {
     selectedProductId: formData.selectedProductId || 4,
@@ -114,7 +113,7 @@ const MultiStepForm = () => {
     shippingCost: formData.shippingCost || "15",
     price: formData.price || "299.00",
     quantity: formData.quantity || "4",
-    idNumber: formData.idNumber || "",
+    idNumber: "",
   };
 
   // Initialize Tranzila Hosted Fields after DOM renders
@@ -123,7 +122,6 @@ const MultiStepForm = () => {
       if (!window.TzlaHostedFields) return;
       hostedFieldsRef.current = window.TzlaHostedFields.create({
         sandbox: false,
-        terminal_name: terminalName,
         fields: {
           credit_card_number: {
             selector: "#tzla-card-number",
@@ -188,6 +186,7 @@ const MultiStepForm = () => {
 
       // 1. Get handshake token from our backend
       const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL ?? "";
+      const terminalName = (import.meta as any).env?.VITE_TRANZILA_TERMINAL ?? "";
 
       const handshakeRes = await fetch(`${baseUrl}/api/handshake`, {
         method: "POST",
@@ -210,7 +209,6 @@ const MultiStepForm = () => {
           amount: totalWithShipping,
           thtk,
           tokenize: true,
-          card_holder_id_number: values.idNumber,
           contact: `${values.firstName} ${values.lastName}`.trim(),
           email: values.email || undefined,
           address: values.streetAddress || undefined,
